@@ -2,11 +2,11 @@
   <Navbar />
   <main class="home">
     <section class="hero">
-      <p class="eyebrow">Student portal desk</p>
-      <h1>StudentPortal for courses, viva booking, and results</h1>
+      <p class="eyebrow">Quiz portal desk</p>
+      <h1>QuizPortal for courses, viva booking, and results</h1>
       <p class="lead">
-        Admins and examiners manage subjects and viva exams here.
-        Students register, book slots, and check published results.
+        Create quiz courses, schedule viva exams, and open booking slots.
+        Students join, reserve a time, and view marks after publish.
       </p>
       <div class="actions">
         <a class="btn primary" href="/login">Login</a>
@@ -66,7 +66,7 @@ import Navbar from './components/Navbar.vue'
 }
 
 .hero {
-  background: #1f4e79;
+  background: #7a4e2d;
   color: #fff;
   padding: 24px;
 }
@@ -97,13 +97,13 @@ h1 {
   padding: 8px 14px;
   text-decoration: none;
   background: #fff;
-  color: #1f4e79;
+  color: #7a4e2d;
   font-weight: bold;
 }
 
 .btn.primary {
-  background: #d9e6f2;
-  color: #173b5c;
+  background: #f0e7dc;
+  color: #623e24;
 }
 
 .details,

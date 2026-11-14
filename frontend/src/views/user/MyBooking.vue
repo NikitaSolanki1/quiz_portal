@@ -45,14 +45,14 @@ const bookings = ref([])
 const message = ref('')
 
 const getBookings = async () => {
-    const response = await axios.post('http://127.0.0.1:5000/fetch_my_bookings', {
+    const response = await axios.post('http://127.0.0.1:5000/get_my_quiz_bookings', {
         user_id: localStorage.getItem('user_id')
     })
     bookings.value = response.data.data
 }
 
 const cancelSlot = async (slot_id) => {
-    const response = await axios.post(`http://127.0.0.1:5000/cancel_viva_booking/${slot_id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/cancel_quiz_booking/${slot_id}`, {
         user_id: localStorage.getItem('user_id')
     })
     message.value = response.data.message

@@ -37,15 +37,15 @@ const filtered = computed(() => {
 })
 
 const load = async () => {
-    const response = await axios.get('http://127.0.0.1:5000/fetch_student_list')
+    const response = await axios.get('http://127.0.0.1:5000/get_quiz_students')
     students.value = response.data.data
 }
 const block_student = async (id) => {
-    await axios.post(`http://127.0.0.1:5000/block_student_access/${id}`)
+    await axios.post(`http://127.0.0.1:5000/block_quiz_student/${id}`)
     load()
 }
 const unblock_student = async (id) => {
-    await axios.post(`http://127.0.0.1:5000/unblock_student_access/${id}`)
+    await axios.post(`http://127.0.0.1:5000/unblock_quiz_student/${id}`)
     load()
 }
 onMounted(load)

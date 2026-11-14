@@ -37,7 +37,7 @@ const responce_frontend = ref('')
 const stats = ref({ assigned: 0, slots: 0, booked_students: 0, pending_evaluations: 0 })
 
 const loadProfile = async () => {
-    const response = await axios.post('http://127.0.0.1:5000/get_examiner_detail', {
+    const response = await axios.post('http://127.0.0.1:5000/get_marker_info', {
         user_id: localStorage.getItem('user_id')
     })
     if (response.data.data) {
@@ -58,15 +58,15 @@ const createProfile = async () => {
         user_id: localStorage.getItem('user_id')
     }
     const response = profile_id.value
-        ? await axios.post('http://127.0.0.1:5000/update_examiner_detail', payload)
-        : await axios.post('http://127.0.0.1:5000/create_examiner_detail', payload)
+        ? await axios.post('http://127.0.0.1:5000/update_marker_info', payload)
+        : await axios.post('http://127.0.0.1:5000/create_marker_info', payload)
     responce_frontend.value = response.data.message
     loadProfile()
 }
 
 onMounted(async () => {
     loadProfile()
-    const response = await axios.post('http://127.0.0.1:5000/examiner_portal_stats', {
+    const response = await axios.post('http://127.0.0.1:5000/quiz_examiner_stats', {
         examinor_id: localStorage.getItem('user_id')
     })
     stats.value = response.data.data

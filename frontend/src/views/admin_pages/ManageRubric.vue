@@ -54,7 +54,7 @@ const rubric_list = ref([])
 const editing_id = ref(null)
 
 const fetch_rubrics = async () => {
-    const response = await axios.get(`http://127.0.0.1:5000/fetch_viva_questions/${examination_id}`)
+    const response = await axios.get(`http://127.0.0.1:5000/get_quiz_questions/${examination_id}`)
     rubric_list.value = response.data.data
     exam_name.value = response.data.exam_name
     can_edit.value = response.data.can_edit
@@ -85,15 +85,15 @@ const save_rubric = async () => {
         marks: marks.value
     }
     const response = editing_id.value
-        ? await axios.post(`http://127.0.0.1:5000/update_viva_question/${editing_id.value}`, payload)
-        : await axios.post(`http://127.0.0.1:5000/create_viva_question/${examination_id}`, payload)
+        ? await axios.post(`http://127.0.0.1:5000/update_quiz_question/${editing_id.value}`, payload)
+        : await axios.post(`http://127.0.0.1:5000/create_quiz_question/${examination_id}`, payload)
     message.value = response.data.message
     clear_form()
     fetch_rubrics()
 }
 
 const delete_rubric = async (id) => {
-    const response = await axios.post(`http://127.0.0.1:5000/delete_viva_question/${id}`)
+    const response = await axios.post(`http://127.0.0.1:5000/delete_quiz_question/${id}`)
     message.value = response.data.message
     fetch_rubrics()
 }

@@ -32,7 +32,7 @@ const responce_frontend = ref('')
 const createCourse = async () => {
     try{
         const response = await axios.post(
-            "http://127.0.0.1:5000/create_subject_course",
+            "http://127.0.0.1:5000/create_quiz_course",
             {
                 courseCode: courseCode.value,
                 courseName: courseName.value,

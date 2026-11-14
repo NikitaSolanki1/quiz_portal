@@ -39,7 +39,7 @@ import { ref, onMounted } from 'vue'
 
 const report = ref({ courses: 0, exams: 0, students: 0, examinors: 0, slots: 0, bookings: 0, exam_rows: [] })
 onMounted(async () => {
-    const response = await axios.get('http://127.0.0.1:5000/portal_admin_reports')
+    const response = await axios.get('http://127.0.0.1:5000/quiz_admin_reports')
     report.value = response.data.data
 })
 </script>

@@ -74,7 +74,7 @@ const exporting = ref(false)
 
 
 const loadAlerts = async () => {
-    const response = await axios.post('http://127.0.0.1:5000/list_portal_notices', {
+    const response = await axios.post('http://127.0.0.1:5000/list_quiz_notices', {
         user_id: localStorage.getItem('user_id')
     })
     alerts.value = response.data.data || []
@@ -84,13 +84,13 @@ const exportHistory = async () => {
     downloadUrl.value = ''
     exportMessage.value = 'Export started. You will get an alert when the CSV is ready.'
     const userId = localStorage.getItem('user_id')
-    const response = await axios.post('http://127.0.0.1:5000/start_history_download', {
+    const response = await axios.post('http://127.0.0.1:5000/start_quiz_export', {
         user_id: userId
     })
     exportMessage.value = response.data.message
     const jobId = response.data.job_id
     const timer = setInterval(async () => {
-        const status = await axios.post('http://127.0.0.1:5000/history_download_status', {
+        const status = await axios.post('http://127.0.0.1:5000/quiz_export_status', {
             user_id: userId,
             job_id: jobId
         })
@@ -98,7 +98,7 @@ const exportHistory = async () => {
             clearInterval(timer)
             exporting.value = false
             exportMessage.value = status.data.message
-            downloadUrl.value = 'http://127.0.0.1:5000/download_history_csv/' + jobId + '?user_id=' + userId
+            downloadUrl.value = 'http://127.0.0.1:5000/download_quiz_csv/' + jobId + '?user_id=' + userId
             loadAlerts()
         }
         if (status.data.status === 'failed') {
@@ -112,7 +112,7 @@ const exportHistory = async () => {
 
 
 const getProfile = async () => {
-    const response = await axios.post('http://127.0.0.1:5000/get_student_detail', {
+    const response = await axios.post('http://127.0.0.1:5000/get_learner_info', {
         user_id: localStorage.getItem('user_id')
     })
     if (response.data.data) {
@@ -131,8 +131,8 @@ const submitForm = async () => {
         user_id: localStorage.getItem('user_id')
     }
     const response = profile_id.value
-        ? await axios.post('http://127.0.0.1:5000/update_student_detail', payload)
-        : await axios.post('http://127.0.0.1:5000/create_student_detail', payload)
+        ? await axios.post('http://127.0.0.1:5000/update_learner_info', payload)
+        : await axios.post('http://127.0.0.1:5000/create_learner_info', payload)
     message.value = response.data.message
     getProfile()
 }
@@ -140,7 +140,7 @@ const submitForm = async () => {
 onMounted(async () => {
     getProfile()
     loadAlerts()
-    const response = await axios.post('http://127.0.0.1:5000/student_portal_home', {
+    const response = await axios.post('http://127.0.0.1:5000/quiz_student_home', {
         user_id: localStorage.getItem('user_id')
     })
     stats.value = response.data.data

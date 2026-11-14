@@ -47,7 +47,7 @@ const filtered = computed(() => {
 })
 
 const load = async () => {
-    const response = await axios.get('http://127.0.0.1:5000/fetch_all_slots')
+    const response = await axios.get('http://127.0.0.1:5000/get_all_quiz_slots')
     slots.value = response.data.data
 }
 onMounted(load)

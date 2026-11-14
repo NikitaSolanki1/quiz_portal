@@ -76,7 +76,7 @@ const responce_frontend = ref('');
 
 const examinor_data = async () => {
     const response = await axios.post(
-        "http://127.0.0.1:5000/fetch_examiner_list",
+        "http://127.0.0.1:5000/get_quiz_examiners",
     )
     examinor_data_list.value = response.data.data
 
@@ -84,14 +84,14 @@ const examinor_data = async () => {
 
 const course_data = async () => {
     const response = await axios.post(
-        "http://127.0.0.1:5000/fetch_one_course_list",
+        "http://127.0.0.1:5000/get_quiz_course_list",
     )
     course_data_list.value = response.data.data
 }
 
 const createExam = async () => {
     const response = await axios.post(
-        "http://127.0.0.1:5000/create_viva_exam",
+        "http://127.0.0.1:5000/create_quiz_exam",
         {
            exam_name: examName.value,
            exam_description: examDescription.value,

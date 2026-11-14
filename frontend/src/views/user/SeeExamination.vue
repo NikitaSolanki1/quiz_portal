@@ -57,12 +57,12 @@ const filtered = computed(() => examinations.value.filter(exam => {
 }))
 
 const getExaminations = async () => {
-    const response = await axios.get('http://127.0.0.1:5000/fetch_open_vivas')
+    const response = await axios.get('http://127.0.0.1:5000/get_open_quizzes')
     examinations.value = response.data.data1
 }
 
 const bookSlot = async (slot_id) => {
-    const response = await axios.post(`http://127.0.0.1:5000/book_viva_slot/${slot_id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/book_quiz_slot/${slot_id}`, {
         user_id: localStorage.getItem('user_id')
     })
     message.value = response.data.message

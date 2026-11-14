@@ -86,15 +86,15 @@ const exam = ref({
 })
 
 const getExamDetail = async () => {
-    const response = await axios.get(`http://127.0.0.1:5000/admin_viva_details/${examination_id}`)
+    const response = await axios.get(`http://127.0.0.1:5000/admin_quiz_details/${examination_id}`)
     exam.value = response.data.data
     examinor_id.value = response.data.data.examinor_id
-    const examinorResponse = await axios.get('http://127.0.0.1:5000/fetch_examiner_list')
+    const examinorResponse = await axios.get('http://127.0.0.1:5000/get_quiz_examiners')
     examinors.value = examinorResponse.data.data
 }
 
 const changeExaminer = async () => {
-    const response = await axios.post(`http://127.0.0.1:5000/change_viva_examiner/${examination_id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/change_quiz_examiner/${examination_id}`, {
         examinor_id: examinor_id.value
     })
     message.value = response.data.message
@@ -102,7 +102,7 @@ const changeExaminer = async () => {
 }
 
 const reschedule = async (slot) => {
-    const response = await axios.post(`http://127.0.0.1:5000/move_booking_slot/${slot.id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/move_quiz_slot/${slot.id}`, {
         slot_date: slot.slot_date,
         slot_time: slot.slot_time,
         end_time: slot.end_time
