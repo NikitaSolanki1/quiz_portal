@@ -3,7 +3,7 @@
   <main class="home">
     <section class="hero">
       <p class="eyebrow">Quiz portal desk</p>
-      <h1>QuizPortal for courses, viva booking, and results</h1>
+      <h1>Quiz Portal for courses, viva booking, and results</h1>
       <p class="lead">
         Create quiz courses, schedule viva exams, and open booking slots.
         Students join, reserve a time, and view marks after publish.
@@ -57,87 +57,3 @@
 <script setup>
 import Navbar from './components/Navbar.vue'
 </script>
-
-<style scoped>
-.home {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 20px 16px 40px;
-}
-
-.hero {
-  background: #7a4e2d;
-  color: #fff;
-  padding: 24px;
-}
-
-.eyebrow {
-  margin: 0 0 8px;
-  font-size: 12px;
-  color: #ddd;
-}
-
-h1 {
-  margin: 0 0 10px;
-  font-size: 28px;
-}
-
-.lead {
-  margin: 0 0 16px;
-  max-width: 600px;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn {
-  display: inline-block;
-  padding: 8px 14px;
-  text-decoration: none;
-  background: #fff;
-  color: #7a4e2d;
-  font-weight: bold;
-}
-
-.btn.primary {
-  background: #f0e7dc;
-  color: #623e24;
-}
-
-.details,
-.roles {
-  margin-top: 24px;
-}
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-}
-
-article {
-  border: 1px solid #ccc;
-  padding: 12px;
-  background: #fff;
-}
-
-article h3 {
-  margin: 0 0 8px;
-}
-
-article p {
-  margin: 0 0 10px;
-}
-
-article a,
-.roles a {
-  color: #333;
-}
-
-.roles ul {
-  margin: 0;
-  padding-left: 18px;
-}
-</style>

@@ -1,7 +1,7 @@
 <template>
     <Navbar />
     <div>
-        <h1>QuizPortal Login</h1>
+        <h1>Quiz Portal Login</h1>
     </div>
     <form @submit.prevent="quizLogin">
         <input type="email" v-model="email" placeholder="Email">

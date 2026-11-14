@@ -97,13 +97,3 @@ onMounted(() => {
     load_exam()
 })
 </script>
-
-<style scoped>
-label {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 13px;
-    color: #374151;
-}
-</style>

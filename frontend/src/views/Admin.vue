@@ -61,24 +61,3 @@ onMounted(() => {
   get_stats()
 })
 </script>
-<style scoped>
-.stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 16px 24px;
-}
-.stat {
-  background: #fff;
-  border: 1px solid #7a4e2d;
-  padding: 16px 24px;
-  min-width: 140px;
-}
-.stat strong {
-  display: block;
-  font-size: 28px;
-}
-.stat span {
-  color: #4b5563;
-}
-</style>

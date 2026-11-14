@@ -1,4 +1,4 @@
-# QuizPortal - college quiz and viva slot booking system
+# Quiz Portal - college quiz and viva slot booking system
 from datetime import datetime, date, timedelta
 from celery.schedules import crontab
 from flask_mail import Mail, Message

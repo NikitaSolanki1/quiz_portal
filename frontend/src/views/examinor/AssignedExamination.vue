@@ -88,17 +88,3 @@ onMounted(() => {
     fetchAssignedExaminations()
 })
 </script>
-
-<style scoped>
-.table-wrap {
-    overflow-x: auto;
-    margin-top: 12px;
-}
-table {
-    border-collapse: collapse;
-}
-th, td {
-    padding: 6px 10px;
-    white-space: nowrap;
-}
-</style>

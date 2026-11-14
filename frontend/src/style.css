@@ -1,111 +1,381 @@
-/* QuizPortal - simple college project styles */
+/* Quiz Portal - simple student project styles (purple theme) */
 
+/* ---------- Basic page ---------- */
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #faf7f2;
-  color: #2a2118;
-  line-height: 1.45;
+  font-family: "Segoe UI", Tahoma, Verdana, sans-serif;
+  background: #f5f3fb;
+  color: #2b2240;
+  line-height: 1.5;
+}
+
+/* the whole page gets 24px space on the left and right */
+#app {
+  padding: 0 24px 32px;
 }
 
 h1 {
-  margin: 20px 24px 10px;
+  margin: 22px 0 12px;
+  padding-left: 10px;
+  border-left: 5px solid #5b3a9e;
   font-size: 24px;
+  color: #3d2670;
 }
 
 h2 {
-  margin: 14px 0 8px;
+  margin: 18px 0 8px;
   font-size: 18px;
+  color: #3d2670;
 }
 
 p {
-  margin: 8px 24px;
+  margin: 8px 0;
 }
 
+a {
+  color: #5b3a9e;
+}
+
+/* ---------- Navbar ---------- */
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 -24px; /* cancel the page padding so the bar is full width */
+  padding: 12px 24px;
+  background: #5b3a9e;
+  color: #fff;
+}
+
+.nav-brand {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-links a {
+  padding: 5px 10px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.nav-links a:hover {
+  background: #46297f;
+}
+
+.logout-btn {
+  margin-left: 6px;
+  background: #fff;
+  color: #5b3a9e;
+  font-weight: bold;
+}
+
+.logout-btn:hover {
+  background: #ece6f8;
+}
+
+/* ---------- Forms ---------- */
 form {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: 100%;
   max-width: 480px;
-  margin: 16px 24px 28px;
-  padding: 16px;
+  margin: 16px 0 28px;
+  padding: 20px;
   background: #fff;
-  border: 1px solid #d7cfc4;
+  border: 1px solid #dcd3ef;
+  border-radius: 8px;
+}
+
+form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #4a3d63;
 }
 
 input,
 select,
 textarea {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #a89884;
+  padding: 8px 10px;
+  border: 1px solid #c4b8e0;
+  border-radius: 4px;
+  background: #fff;
+  font-family: inherit;
   font-size: 14px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #b9a6e6;
+  border-color: #5b3a9e;
 }
 
 textarea {
   min-height: 70px;
 }
 
+/* search boxes that sit outside a form */
+div > input,
+div > select {
+  max-width: 480px;
+  margin: 4px 0;
+}
+
+/* ---------- Buttons ---------- */
 button {
-  padding: 8px 12px;
+  padding: 8px 14px;
   border: none;
-  background: #7a4e2d;
+  border-radius: 4px;
+  background: #5b3a9e;
   color: #fff;
-  cursor: pointer;
+  font-family: inherit;
   font-size: 14px;
+  cursor: pointer;
 }
 
 button:hover {
-  background: #623e24;
+  background: #46297f;
 }
 
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+td button {
+  margin: 2px 6px 2px 0;
+  padding: 5px 10px;
+  font-size: 13px;
+}
+
+/* ---------- Link buttons (dashboard shortcuts) ---------- */
 .links {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 12px 24px;
+  margin: 12px 0;
 }
 
 .links a {
-  background: #7a4e2d;
-  color: #fff;
-  text-decoration: none;
-  padding: 8px 10px;
+  padding: 8px 14px;
+  border: 1px solid #5b3a9e;
+  border-radius: 20px;
+  background: #fff;
+  color: #5b3a9e;
   font-size: 14px;
+  text-decoration: none;
 }
 
+.links a:hover {
+  background: #5b3a9e;
+  color: #fff;
+}
+
+/* ---------- Tables ---------- */
 table {
-  width: calc(100% - 48px);
-  margin: 12px 24px 28px;
+  width: 100%;
+  margin: 12px 0 28px;
   border-collapse: collapse;
   background: #fff;
+  border: 1px solid #dcd3ef;
 }
 
 th,
 td {
-  border: 1px solid #e2d8cc;
-  padding: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e6e0f3;
   text-align: left;
   font-size: 14px;
 }
 
 th {
-  background: #f0e7dc;
+  background: #ece6f8;
+  color: #3d2670;
 }
 
-td button {
-  margin-right: 6px;
+tbody tr:nth-child(even) {
+  background: #faf8fe;
 }
 
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table-wrap th,
+.table-wrap td {
+  white-space: nowrap;
+}
+
+/* ---------- Dashboard count boxes ---------- */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.stat {
+  min-width: 140px;
+  padding: 16px 20px;
+  background: #fff;
+  border: 1px solid #dcd3ef;
+  border-top: 4px solid #5b3a9e;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.stat strong {
+  display: block;
+  font-size: 28px;
+  color: #3d2670;
+}
+
+.stat span {
+  color: #6b6280;
+}
+
+/* ---------- Messages ---------- */
 .error {
+  padding: 8px 12px;
+  background: #fdecec;
+  border-left: 4px solid #c0392b;
   color: #9b1c1c;
 }
 
 .success {
+  padding: 8px 12px;
+  background: #e9f7ef;
+  border-left: 4px solid #2e8b57;
   color: #1b5e20;
+}
+
+/* ---------- Home page ---------- */
+.home {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.home h1 {
+  margin: 0 0 10px;
+  padding-left: 0;
+  border-left: none;
+  font-size: 28px;
+  color: #fff;
+}
+
+.home p {
+  margin: 0 0 10px;
+}
+
+.hero {
+  padding: 28px 24px;
+  border-radius: 8px;
+  background: #5b3a9e;
+  color: #fff;
+}
+
+.hero .eyebrow {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #d9ccf5;
+}
+
+.hero .lead {
+  max-width: 600px;
+  margin-bottom: 18px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 8px 18px;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.btn.primary {
+  background: #fff;
+  color: #5b3a9e;
+}
+
+.details,
+.roles {
+  margin-top: 28px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.cards article {
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #dcd3ef;
+  border-radius: 8px;
+}
+
+.cards h3 {
+  margin: 0 0 8px;
+  color: #3d2670;
+}
+
+.roles ul {
+  margin: 0;
+  padding: 14px 14px 14px 34px;
+  background: #fff;
+  border: 1px solid #dcd3ef;
+  border-radius: 8px;
+}
+
+/* ---------- Small screens (phones) ---------- */
+@media (max-width: 700px) {
+  #app {
+    padding: 0 16px 24px;
+  }
+
+  nav {
+    margin: 0 -16px;
+    padding: 10px 16px;
+  }
+
+  /* wide tables scroll sideways instead of breaking the page */
+  table {
+    display: block;
+    overflow-x: auto;
+    border: none;
+    background: none;
+  }
+
+  td {
+    background: #fff;
+  }
 }

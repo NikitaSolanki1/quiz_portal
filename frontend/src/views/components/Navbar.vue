@@ -1,6 +1,6 @@
 <template>
   <nav>
-    <div class="nav-brand">QuizPortal</div>
+    <div class="nav-brand">Quiz Portal</div>
     <div class="nav-links">
       <template v-if="loggedIn">
         <template v-if="role === 'admin'">
@@ -55,40 +55,3 @@ const logout = () => {
   window.location.href = '/login'
 }
 </script>
-
-<style scoped>
-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 20px;
-  background: #7a4e2d;
-  color: #fff;
-}
-.nav-brand {
-  font-weight: bold;
-  font-size: 18px;
-}
-.nav-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-a {
-  color: #eee;
-  text-decoration: none;
-  font-size: 14px;
-}
-a:hover {
-  text-decoration: underline;
-}
-.logout-btn {
-  background: #a00;
-  color: #fff;
-  border: none;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-</style>

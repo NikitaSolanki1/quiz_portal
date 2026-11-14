@@ -60,10 +60,3 @@ onMounted(() => {
 })
 
 </script>
-<style scoped>
-.edit-course{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-</style>

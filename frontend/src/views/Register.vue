@@ -49,6 +49,3 @@ const quizRegister = async () =>{
 }
 
 </script>
-
-<style scoped>
-</style>

@@ -72,8 +72,3 @@ onMounted(async () => {
     stats.value = response.data.data
 })
 </script>
-<style scoped>
-.stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 24px; }
-.stat { background: #fff; border: 1px solid #d1d5db; border-radius: 6px; padding: 16px 24px; min-width: 140px; }
-.stat strong { display: block; font-size: 28px; }
-</style>
