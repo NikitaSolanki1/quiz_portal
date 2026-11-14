@@ -59,7 +59,7 @@ const exam = ref({
 })
 
 const load = async () => {
-    const exams = await axios.get('http://127.0.0.1:5000/list_exams')
+    const exams = await axios.get('http://127.0.0.1:5000/get_vivas')
     const found = exams.data.data.find(item => String(item.id) === String(examId))
     exam.value = {
         exam_name: found.name,
@@ -78,13 +78,13 @@ const load = async () => {
         status: found.status
     }
     dateLocked.value = Boolean(found.exam_date_locked)
-    const courseResponse = await axios.post('http://127.0.0.1:5000/list_courses')
+    const courseResponse = await axios.post('http://127.0.0.1:5000/get_modules')
     courses.value = courseResponse.data.data
-    const examinorResponse = await axios.get('http://127.0.0.1:5000/list_examiners')
+    const examinorResponse = await axios.get('http://127.0.0.1:5000/get_staff_list')
     examinors.value = examinorResponse.data.data
 }
 const save = async () => {
-    const response = await axios.post(`http://127.0.0.1:5000/update_exam/${examId}`, exam.value)
+    const response = await axios.post(`http://127.0.0.1:5000/save_viva/${examId}`, exam.value)
     message.value = response.data.message
 }
 onMounted(load)

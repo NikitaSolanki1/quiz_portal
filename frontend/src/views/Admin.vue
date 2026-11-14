@@ -53,7 +53,7 @@ const stats = ref({
 })
 
 const get_stats = async () => {
-  const response = await axios.post('http://127.0.0.1:5000/fetch_admin_stats')
+  const response = await axios.post('http://127.0.0.1:5000/admin_overview')
   stats.value = response.data.data
 }
 
@@ -70,8 +70,8 @@ onMounted(() => {
 }
 .stat {
   background: #fff;
-  border: 1px solid #99f6e4;
-  border-radius: 8px;
+  border: 1px solid #93c5fd;
+  border-radius: 4px;
   padding: 16px 24px;
   min-width: 140px;
 }

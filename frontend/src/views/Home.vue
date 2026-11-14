@@ -2,10 +2,10 @@
   <Navbar />
   <main class="home">
     <section class="hero">
-      <p class="eyebrow">Campus viva portal</p>
+      <p class="eyebrow">SlotWise viva desk</p>
       <h1>Plan courses, exams, and question banks in one place</h1>
       <p class="lead">
-        CampusViva helps admins and examiners set up courses, schedule
+        SlotWise helps admins and examiners set up courses, schedule
         examinations, assign examiners, and build question banks for each exam.
       </p>
       <div class="actions">
@@ -68,9 +68,9 @@ import Navbar from './components/Navbar.vue'
 }
 
 .hero {
-  background: #134e4a;
-  color: #f0fdfa;
-  border-radius: 10px;
+  background: #1e3a5f;
+  color: #f8fafc;
+  border-radius: 4px;
   padding: 32px 28px;
 }
 
@@ -79,7 +79,7 @@ import Navbar from './components/Navbar.vue'
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-size: 12px;
-  color: #99f6e4;
+  color: #93c5fd;
 }
 
 h1 {
@@ -102,16 +102,16 @@ h1 {
 .btn {
   display: inline-block;
   padding: 10px 16px;
-  border-radius: 6px;
+  border-radius: 4px;
   text-decoration: none;
   background: #fff;
-  color: #134e4a;
+  color: #1e3a5f;
   font-weight: 600;
 }
 
 .btn.primary {
-  background: #5eead4;
-  color: #134e4a;
+  background: #93c5fd;
+  color: #1e3a5f;
 }
 
 .details,
@@ -130,10 +130,10 @@ h2 {
 }
 
 article {
-  border: 1px solid #99f6e4;
-  border-radius: 8px;
+  border: 1px solid #93c5fd;
+  border-radius: 4px;
   padding: 16px;
-  background: #f0fdfa;
+  background: #eff6ff;
 }
 
 article h3 {
@@ -147,7 +147,7 @@ article p {
 
 article a,
 .roles a {
-  color: #0f766e;
+  color: #1e3a5f;
 }
 
 .roles ul {

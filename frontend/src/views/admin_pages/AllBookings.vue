@@ -47,11 +47,11 @@ const filtered = computed(() => {
 })
 
 const load = async () => {
-    const response = await axios.get('http://127.0.0.1:5000/list_all_bookings')
+    const response = await axios.get('http://127.0.0.1:5000/get_every_hold')
     bookings.value = response.data.data
 }
 const reschedule = async (booking) => {
-    const response = await axios.post(`http://127.0.0.1:5000/move_slot/${booking.slot_id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/shift_window/${booking.slot_id}`, {
         slot_date: booking.slot_date,
         slot_time: booking.slot_time,
         end_time: booking.end_time

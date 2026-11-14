@@ -3,7 +3,7 @@
     <div>
         <h1>Login</h1>
     </div>
-    <form @submit.prevent="doSignIn">
+    <form @submit.prevent="handleLogin">
         <input type="email" v-model="email" placeholder="Email">
         <input type="password" v-model="password" placeholder="Password">
         <button type="submit">Login</button>
@@ -23,12 +23,12 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const response_data = ref('')
-const doSignIn = async () =>{
+const handleLogin = async () =>{
     error.value = ''
     response_data.value = ''
     try{
         const response = await axios.post(
-            "http://127.0.0.1:5000/signin_user",
+            "http://127.0.0.1:5000/auth_login",
             {
                 email:email.value,
                 password:password.value

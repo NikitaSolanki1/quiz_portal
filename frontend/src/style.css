@@ -1,4 +1,4 @@
-/* Simple global styles for CampusViva */
+/* Simple global styles for SlotWise */
 
 * {
   box-sizing: border-box;
@@ -6,13 +6,12 @@
 
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #eef2f7;
-  color: #1f2937;
+  font-family: Georgia, "Times New Roman", serif;
+  background: #f5f7fb;
+  color: #1e293b;
   line-height: 1.5;
 }
 
-/* Keep page content away from screen edges */
 #app {
   min-height: 100vh;
 }
@@ -22,11 +21,13 @@ h1 {
   padding: 0 24px;
   max-width: 1100px;
   font-size: 26px;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 h2 {
   margin: 16px 0 10px;
   font-size: 20px;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 p {
@@ -35,7 +36,7 @@ p {
   max-width: 1100px;
 }
 
-/* Forms: neat column layout */
+/* Forms stay in a neat box */
 form {
   display: flex;
   flex-direction: column;
@@ -45,8 +46,8 @@ form {
   padding: 20px;
   max-width: 520px;
   background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
 }
 
 input,
@@ -54,9 +55,10 @@ select,
 textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
   font-size: 14px;
+  font-family: Arial, Helvetica, sans-serif;
   background: #fff;
 }
 
@@ -68,18 +70,18 @@ textarea {
 button {
   padding: 10px 14px;
   border: none;
-  border-radius: 6px;
-  background: #0f766e;
+  border-radius: 4px;
+  background: #1e3a5f;
   color: #fff;
   cursor: pointer;
   font-size: 14px;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 button:hover {
-  background: #0d9488;
+  background: #254a78;
 }
 
-/* Link buttons used on dashboards */
 .links {
   display: flex;
   flex-wrap: wrap;
@@ -90,31 +92,32 @@ button:hover {
 }
 
 .links a {
-  background: #0f766e;
+  background: #1e3a5f;
   color: #fff;
   text-decoration: none;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 14px;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .links a:hover {
-  background: #0d9488;
+  background: #254a78;
 }
 
-/* Tables: readable and aligned */
 table {
   width: calc(100% - 48px);
   max-width: 1100px;
   margin: 16px auto 32px;
   border-collapse: collapse;
   background: #fff;
-  border: 1px solid #d1d5db;
+  border: 1px solid #cbd5e1;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 th,
 td {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
   padding: 10px 12px;
   text-align: left;
   vertical-align: top;
@@ -122,19 +125,18 @@ td {
 }
 
 th {
-  background: #ccfbf1;
-  color: #134e4a;
+  background: #dbe4f0;
+  color: #1e3a5f;
 }
 
 td button {
   margin: 2px 6px 2px 0;
 }
 
-/* Small helper text */
 .error {
   color: #b91c1c;
 }
 
 .success {
-  color: #047857;
+  color: #166534;
 }

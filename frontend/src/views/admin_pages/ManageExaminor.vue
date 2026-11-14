@@ -41,7 +41,7 @@ const response_frontend = ref([])
 import Navbar from '../components/Navbar.vue'
 const fetchExaminorDetails = async () => {
     try {
-        const response = await axios.get('http://localhost:5000/list_examiners')
+        const response = await axios.get('http://localhost:5000/get_staff_list')
         response_frontend.value = response.data.data
     } catch (error) {
         console.error('Error fetching examinor details:', error)
@@ -49,7 +49,7 @@ const fetchExaminorDetails = async () => {
 }
 
 const save_examinor = async (examinor) => {
-    await axios.post(`http://127.0.0.1:5000/update_examiner_account/${examinor.id}`, {
+    await axios.post(`http://127.0.0.1:5000/save_staff_member/${examinor.id}`, {
         name: examinor.name,
         phone: examinor.phone,
         department: examinor.department
@@ -58,7 +58,7 @@ const save_examinor = async (examinor) => {
 }
 const block_examinor = async (id) => {
     try {
-        const response = await axios.post(`http://127.0.0.1:5000/freeze_examiner/${id}`)
+        const response = await axios.post(`http://127.0.0.1:5000/lock_staff/${id}`)
         fetchExaminorDetails()
     } catch (error) {
         console.error('Error blocking examinor:', error)
@@ -66,7 +66,7 @@ const block_examinor = async (id) => {
 }
 const unblock_examinor = async (id) => {
     try {
-        const response = await axios.post(`http://127.0.0.1:5000/unfreeze_examiner/${id}`)
+        const response = await axios.post(`http://127.0.0.1:5000/unlock_staff/${id}`)
         fetchExaminorDetails()
     } catch (error) {
         console.error('Error unblocking examinor:', error)

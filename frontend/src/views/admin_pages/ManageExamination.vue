@@ -44,7 +44,7 @@ const response_frontend = ref([])
 const router = useRouter()
 const fetchExaminationDetails = async () => {
     try {
-        const response = await axios.get('http://127.0.0.1:5000/list_exams')
+        const response = await axios.get('http://127.0.0.1:5000/get_vivas')
         response_frontend.value = response.data.data
     } catch (error) {
         console.error('Error fetching examination details:', error)
@@ -64,23 +64,23 @@ const edit_exam = (examination_id) => {
 }
 
 const delete_exam = async (examination_id) => {
-  await axios.post(`http://127.0.0.1:5000/remove_exam/${examination_id}`)
+  await axios.post(`http://127.0.0.1:5000/delete_viva/${examination_id}`)
   fetchExaminationDetails()
 }
 
 const toggle_booking = async (examination) => {
-  const path = examination.booking_open ? 'disable_booking' : 'enable_booking'
+  const path = examination.booking_open ? 'close_holds' : 'open_holds'
   await axios.post(`http://127.0.0.1:5000/${path}/${examination.id}`)
   fetchExaminationDetails()
 }
 
 const publish_results = async (examination_id) => {
-  await axios.post(`http://127.0.0.1:5000/release_results/${examination_id}`)
+  await axios.post(`http://127.0.0.1:5000/publish_grades/${examination_id}`)
   fetchExaminationDetails()
 }
 
 const toggle_slot = async (examination) => {
-  const path = examination.slot_open ? 'disable_slots' : 'enable_slots'
+  const path = examination.slot_open ? 'close_windows' : 'open_windows'
   await axios.post(`http://127.0.0.1:5000/${path}/${examination.id}`)
   fetchExaminationDetails()
 }

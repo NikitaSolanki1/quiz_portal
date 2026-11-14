@@ -48,7 +48,7 @@ const remarks = ref('')
 const message = ref('')
 
 const getBooking = async () => {
-    const response = await axios.get(`http://127.0.0.1:5000/enter_marks/${booking_id}`)
+    const response = await axios.get(`http://127.0.0.1:5000/score_hold/${booking_id}`)
     exam_name.value = response.data.data.exam_name
     student_name.value = response.data.data.student_name
     rubrics.value = response.data.data.rubrics
@@ -56,7 +56,7 @@ const getBooking = async () => {
 }
 
 const saveMarks = async () => {
-    const response = await axios.post(`http://127.0.0.1:5000/enter_marks/${booking_id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/score_hold/${booking_id}`, {
         remarks: remarks.value,
         rubrics: rubrics.value.map(rubric => ({
             question_id: rubric.id,

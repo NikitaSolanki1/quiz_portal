@@ -75,14 +75,14 @@ const exam = ref({
 })
 
 const getExamDetail = async () => {
-    const response = await axios.post(`http://127.0.0.1:5000/view_exam_detail/${examination_id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/viva_detail_page/${examination_id}`, {
         user_id: localStorage.getItem('user_id')
     })
     exam.value = response.data.data
 }
 
 const bookSlot = async (slot_id) => {
-    const response = await axios.post(`http://127.0.0.1:5000/reserve_slot/${slot_id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/hold_window/${slot_id}`, {
         user_id: localStorage.getItem('user_id')
     })
     message.value = response.data.message
@@ -90,7 +90,7 @@ const bookSlot = async (slot_id) => {
 }
 
 const cancelSlot = async (slot_id) => {
-    const response = await axios.post(`http://127.0.0.1:5000/drop_slot/${slot_id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/cancel_hold/${slot_id}`, {
         user_id: localStorage.getItem('user_id')
     })
     message.value = response.data.message

@@ -1,6 +1,6 @@
 <template>
   <nav>
-    <div class="nav-brand">CampusViva</div>
+    <div class="nav-brand">SlotWise</div>
     <div class="nav-links">
       <template v-if="loggedIn">
         <template v-if="role === 'admin'">
@@ -64,13 +64,13 @@ nav {
   justify-content: space-between;
   gap: 16px;
   padding: 12px 24px;
-  background-color: #134e4a;
+  background-color: #1e3a5f;
   color: #fff;
 }
 .nav-brand {
   font-weight: 700;
   font-size: 18px;
-  color: #99f6e4;
+  color: #93c5fd;
   white-space: nowrap;
 }
 .nav-links {
@@ -81,7 +81,7 @@ nav {
   flex-wrap: wrap;
 }
 a {
-  color: #ecfdf5;
+  color: #e2e8f0;
   text-decoration: none;
   font-size: 14px;
 }
@@ -94,7 +94,7 @@ a:hover {
   color: #fff;
   border: none;
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
 }

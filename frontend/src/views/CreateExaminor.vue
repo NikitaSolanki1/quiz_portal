@@ -42,7 +42,7 @@ const error = ref('')
 const register = async () =>{
     try{
         const responce = await axios.post(
-            "http://127.0.0.1:5000/signup_examiner",
+            "http://127.0.0.1:5000/auth_register_staff",
             {
                 username:username.value,
                 email:email.value,
