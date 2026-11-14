@@ -19,7 +19,7 @@ const question = ref('')
 const marks = ref('')
 const examination_id = useRoute().params.examination_id
 const create_questionbank = async()=>{
-    const response = await axios.post(`http://127.0.0.1:5000/create_questionbank/${examination_id}`,{
+    const response = await axios.post(`http://127.0.0.1:5000/add_question_bank/${examination_id}`,{
         question:question.value,
         marks:marks.value
     })

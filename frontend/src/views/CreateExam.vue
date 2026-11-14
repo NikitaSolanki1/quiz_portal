@@ -76,7 +76,7 @@ const responce_frontend = ref('');
 
 const examinor_data = async () => {
     const response = await axios.post(
-        "http://127.0.0.1:5000/provide_examinor_details",
+        "http://127.0.0.1:5000/list_examiners",
     )
     examinor_data_list.value = response.data.data
 
@@ -84,14 +84,14 @@ const examinor_data = async () => {
 
 const course_data = async () => {
     const response = await axios.post(
-        "http://127.0.0.1:5000/provide_course_details",
+        "http://127.0.0.1:5000/list_courses",
     )
     course_data_list.value = response.data.data
 }
 
 const createExam = async () => {
     const response = await axios.post(
-        "http://127.0.0.1:5000/create_exam",
+        "http://127.0.0.1:5000/add_exam",
         {
            exam_name: examName.value,
            exam_description: examDescription.value,

@@ -9,7 +9,7 @@
     <div v-if="error">
         <p>{{ error }}</p>
     </div>
-    <form @submit.prevent="register">
+    <form @submit.prevent="doSignUp">
         <input type="text" v-model="username" placeholder="Username">
         <input type="email" v-model="email" placeholder="Email">
         <input type="password" v-model="password" placeholder="Password">
@@ -27,13 +27,13 @@ import { ref } from 'vue'
 const username = ref('')
 const email = ref('')
 const password = ref('')
-const role = ref('')
+const role = ref('user')
 const message = ref('')
 const error = ref('')
-const register = async () =>{
+const doSignUp = async () =>{
     try{
         const responce = await axios.post(
-            "http://127.0.0.1:5000/register",
+            "http://127.0.0.1:5000/signup_student",
             {
                 username:username.value,
                 email:email.value,
@@ -42,8 +42,9 @@ const register = async () =>{
             }
         )
         message.value = responce.data.message
+        error.value = ''
     } catch(err){
-        error.message = err.response.data.message
+        error.value = err.response && err.response.data ? err.response.data.message : 'Register failed'
     }
 }
 

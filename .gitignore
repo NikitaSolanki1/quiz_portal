@@ -7,10 +7,14 @@ venv/
 instance/
 *.db
 
+# Local tooling (Node/Redis binaries)
+.tools/
+
 # OS
 .DS_Store
 Thumbs.db
 
 # Runtime
 celerybeat-schedule
+celerybeat-schedule.db
 exports/

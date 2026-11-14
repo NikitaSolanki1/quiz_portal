@@ -2,10 +2,10 @@
   <Navbar />
   <main class="home">
     <section class="hero">
-      <p class="eyebrow">Examination portal</p>
+      <p class="eyebrow">Campus viva portal</p>
       <h1>Plan courses, exams, and question banks in one place</h1>
       <p class="lead">
-        This portal is for admins and examiners who set up courses, schedule
+        CampusViva helps admins and examiners set up courses, schedule
         examinations, assign examiners, and build question banks for each exam.
       </p>
       <div class="actions">
@@ -68,18 +68,18 @@ import Navbar from './components/Navbar.vue'
 }
 
 .hero {
-  background: #143d2a;
-  color: #f4fff6;
-  border-radius: 12px;
+  background: #134e4a;
+  color: #f0fdfa;
+  border-radius: 10px;
   padding: 32px 28px;
 }
 
 .eyebrow {
   margin: 0 0 8px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   font-size: 12px;
-  color: #b7f5c4;
+  color: #99f6e4;
 }
 
 h1 {
@@ -105,13 +105,13 @@ h1 {
   border-radius: 6px;
   text-decoration: none;
   background: #fff;
-  color: #143d2a;
+  color: #134e4a;
   font-weight: 600;
 }
 
 .btn.primary {
-  background: #9be15d;
-  color: #143d2a;
+  background: #5eead4;
+  color: #134e4a;
 }
 
 .details,
@@ -130,10 +130,10 @@ h2 {
 }
 
 article {
-  border: 1px solid #d7e3d8;
-  border-radius: 10px;
+  border: 1px solid #99f6e4;
+  border-radius: 8px;
   padding: 16px;
-  background: #f7fbf7;
+  background: #f0fdfa;
 }
 
 article h3 {
@@ -147,7 +147,7 @@ article p {
 
 article a,
 .roles a {
-  color: #0b6b32;
+  color: #0f766e;
 }
 
 .roles ul {

@@ -3,14 +3,13 @@
     <div>
         <h1>Login</h1>
     </div>
-    <form @submit.prevent="login">
+    <form @submit.prevent="doSignIn">
         <input type="email" v-model="email" placeholder="Email">
         <input type="password" v-model="password" placeholder="Password">
         <button type="submit">Login</button>
     </form>
-  <p v-if="error">{{ error }}</p>
-  <p v-if="response_data">{{ response_data }}</p>
-  <p v-if="token">Token saved. {{ token }}</p>
+  <p class="error" v-if="error">{{ error }}</p>
+  <p class="success" v-if="response_data">{{ response_data }}</p>
 </template>
 
 <script setup>
@@ -24,14 +23,12 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const response_data = ref('')
-const token = ref('')
-const login = async () =>{
+const doSignIn = async () =>{
     error.value = ''
     response_data.value = ''
-    token.value = ''
     try{
         const response = await axios.post(
-            "http://127.0.0.1:5000/login",
+            "http://127.0.0.1:5000/signin_user",
             {
                 email:email.value,
                 password:password.value
@@ -39,7 +36,6 @@ const login = async () =>{
         )
         response_data.value = response.data.message
         if (response.data.token) {
-            token.value = response.data.token
             localStorage.setItem('token', response.data.token)
             localStorage.setItem('role', response.data.role)
             localStorage.setItem('name', response.data.name)

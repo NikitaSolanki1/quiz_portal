@@ -1,6 +1,6 @@
 <template>
   <nav>
-    <div class="nav-brand">ExamPortal</div>
+    <div class="nav-brand">CampusViva</div>
     <div class="nav-links">
       <template v-if="loggedIn">
         <template v-if="role === 'admin'">
@@ -62,35 +62,35 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   padding: 12px 24px;
-  background-color: #1f2937;
+  background-color: #134e4a;
   color: #fff;
 }
 .nav-brand {
   font-weight: 700;
   font-size: 18px;
-  color: #34d399;
+  color: #99f6e4;
+  white-space: nowrap;
 }
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: flex-end;
+  gap: 14px;
   flex-wrap: wrap;
 }
 a {
-  color: #e5e7eb;
+  color: #ecfdf5;
   text-decoration: none;
   font-size: 14px;
 }
 a:hover {
   color: #fff;
-}
-a.active {
-  color: #34d399;
-  font-weight: 600;
+  text-decoration: underline;
 }
 .logout-btn {
-  background: #ef4444;
+  background: #b91c1c;
   color: #fff;
   border: none;
   padding: 6px 14px;
@@ -99,6 +99,6 @@ a.active {
   font-size: 14px;
 }
 .logout-btn:hover {
-  background: #dc2626;
+  background: #991b1b;
 }
 </style>
