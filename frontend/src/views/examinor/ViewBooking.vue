@@ -44,7 +44,7 @@ import { ref, onMounted } from 'vue'
 const bookings = ref([])
 
 const getBookings = async () => {
-    const response = await axios.post('http://127.0.0.1:5000/list_examiner_bookings', {
+    const response = await axios.post('http://127.0.0.1:5000/fetch_examiner_bookings', {
         examinor_id: localStorage.getItem('user_id')
     })
     bookings.value = response.data.data

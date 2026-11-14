@@ -54,7 +54,7 @@ const today = () => {
 }
 
 const load_exam = async () => {
-    const response = await axios.get('http://127.0.0.1:5000/list_exams')
+    const response = await axios.get('http://127.0.0.1:5000/fetch_viva_list')
     const exam = response.data.data.find(item => String(item.id) === String(examination_id))
     if (!exam) {
         blocked_message.value = 'Examination not found'
@@ -82,7 +82,7 @@ const createSlot = async () => {
         responce_frontend.value = 'Give the slot on an examination date, from ' + exam_start.value + ' to ' + exam_end.value
         return
     }
-    const response = await axios.post(`http://127.0.0.1:5000/add_available_slot/${examination_id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/create_booking_slot/${examination_id}`, {
         slot_date: slot_date.value,
         slot_time: slot_time.value,
         end_time: end_time.value,

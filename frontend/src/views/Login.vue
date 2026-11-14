@@ -1,9 +1,9 @@
 <template>
     <Navbar />
     <div>
-        <h1>ExamZone Login</h1>
+        <h1>StudentPortal Login</h1>
     </div>
-    <form @submit.prevent="signInUser">
+    <form @submit.prevent="portalLogin">
         <input type="email" v-model="email" placeholder="Email">
         <input type="password" v-model="password" placeholder="Password">
         <button type="submit">Login</button>
@@ -23,12 +23,12 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const response_data = ref('')
-const signInUser = async () =>{
+const portalLogin = async () =>{
     error.value = ''
     response_data.value = ''
     try{
         const response = await axios.post(
-            "http://127.0.0.1:5000/sign_in",
+            "http://127.0.0.1:5000/portal_login",
             {
                 email:email.value,
                 password:password.value

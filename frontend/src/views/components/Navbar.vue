@@ -1,6 +1,6 @@
 <template>
   <nav>
-    <div class="nav-brand">ExamZone</div>
+    <div class="nav-brand">StudentPortal</div>
     <div class="nav-links">
       <template v-if="loggedIn">
         <template v-if="role === 'admin'">
@@ -63,7 +63,7 @@ nav {
   justify-content: space-between;
   gap: 12px;
   padding: 10px 20px;
-  background: #2f5d50;
+  background: #1f4e79;
   color: #fff;
 }
 .nav-brand {

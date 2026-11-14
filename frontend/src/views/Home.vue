@@ -2,11 +2,11 @@
   <Navbar />
   <main class="home">
     <section class="hero">
-      <p class="eyebrow">Exam zone desk</p>
-      <h1>Manage courses, viva slots, and marks in ExamZone</h1>
+      <p class="eyebrow">Student portal desk</p>
+      <h1>StudentPortal for courses, viva booking, and results</h1>
       <p class="lead">
-        ExamZone lets staff create courses, schedule exams, open booking windows,
-        and record viva marks for every student.
+        Admins and examiners manage subjects and viva exams here.
+        Students register, book slots, and check published results.
       </p>
       <div class="actions">
         <a class="btn primary" href="/login">Login</a>
@@ -66,7 +66,7 @@ import Navbar from './components/Navbar.vue'
 }
 
 .hero {
-  background: #2f5d50;
+  background: #1f4e79;
   color: #fff;
   padding: 24px;
 }
@@ -97,13 +97,13 @@ h1 {
   padding: 8px 14px;
   text-decoration: none;
   background: #fff;
-  color: #2f5d50;
+  color: #1f4e79;
   font-weight: bold;
 }
 
 .btn.primary {
-  background: #dcece6;
-  color: #244a40;
+  background: #d9e6f2;
+  color: #173b5c;
 }
 
 .details,

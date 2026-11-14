@@ -9,7 +9,7 @@
     <div v-if="error">
         <p>{{ error }}</p>
     </div>
-    <form @submit.prevent="signUpStudent">
+    <form @submit.prevent="portalRegister">
         <input type="text" v-model="username" placeholder="Username">
         <input type="email" v-model="email" placeholder="Email">
         <input type="password" v-model="password" placeholder="Password">
@@ -30,10 +30,10 @@ const password = ref('')
 const role = ref('user')
 const message = ref('')
 const error = ref('')
-const signUpStudent = async () =>{
+const portalRegister = async () =>{
     try{
         const responce = await axios.post(
-            "http://127.0.0.1:5000/sign_up_student",
+            "http://127.0.0.1:5000/register_new_student",
             {
                 username:username.value,
                 email:email.value,
