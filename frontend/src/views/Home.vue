@@ -2,11 +2,11 @@
   <Navbar />
   <main class="home">
     <section class="hero">
-      <p class="eyebrow">SlotWise viva desk</p>
-      <h1>Plan courses, exams, and question banks in one place</h1>
+      <p class="eyebrow">College viva desk</p>
+      <h1>Book viva slots and manage exams with ExamNest</h1>
       <p class="lead">
-        SlotWise helps admins and examiners set up courses, schedule
-        examinations, assign examiners, and build question banks for each exam.
+        Use ExamNest to create courses, open examinations, assign examiners,
+        publish slots for students, and store marks for each viva.
       </p>
       <div class="actions">
         <a class="btn primary" href="/login">Login</a>
@@ -60,80 +60,67 @@ import Navbar from './components/Navbar.vue'
 
 <style scoped>
 .home {
-  max-width: 960px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 24px 16px 48px;
-  font-family: Arial, sans-serif;
-  color: #1a1a1a;
+  padding: 20px 16px 40px;
 }
 
 .hero {
-  background: #1e3a5f;
-  color: #f8fafc;
-  border-radius: 4px;
-  padding: 32px 28px;
+  background: #333;
+  color: #fff;
+  padding: 24px;
 }
 
 .eyebrow {
   margin: 0 0 8px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   font-size: 12px;
-  color: #93c5fd;
+  color: #ddd;
 }
 
 h1 {
-  margin: 0 0 12px;
-  font-size: 32px;
-  line-height: 1.2;
+  margin: 0 0 10px;
+  font-size: 28px;
 }
 
 .lead {
-  margin: 0 0 20px;
-  max-width: 640px;
-  line-height: 1.5;
+  margin: 0 0 16px;
+  max-width: 600px;
 }
 
 .actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .btn {
   display: inline-block;
-  padding: 10px 16px;
-  border-radius: 4px;
+  padding: 8px 14px;
   text-decoration: none;
   background: #fff;
-  color: #1e3a5f;
-  font-weight: 600;
+  color: #333;
+  font-weight: bold;
 }
 
 .btn.primary {
-  background: #93c5fd;
-  color: #1e3a5f;
+  background: #ddd;
+  color: #222;
 }
 
 .details,
 .roles {
-  margin-top: 32px;
-}
-
-h2 {
-  margin: 0 0 16px;
+  margin-top: 24px;
 }
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
 }
 
 article {
-  border: 1px solid #93c5fd;
-  border-radius: 4px;
-  padding: 16px;
-  background: #eff6ff;
+  border: 1px solid #ccc;
+  padding: 12px;
+  background: #fff;
 }
 
 article h3 {
@@ -141,18 +128,16 @@ article h3 {
 }
 
 article p {
-  margin: 0 0 12px;
-  line-height: 1.45;
+  margin: 0 0 10px;
 }
 
 article a,
 .roles a {
-  color: #1e3a5f;
+  color: #333;
 }
 
 .roles ul {
   margin: 0;
   padding-left: 18px;
-  line-height: 1.7;
 }
 </style>

@@ -59,7 +59,7 @@ const editing_id = ref(null)
 const form = ref({ slot_date: '', slot_time: '', end_time: '', capacity: 1, meeting_link: '' })
 
 const fetch_slots = async () => {
-    const response = await axios.get(`http://127.0.0.1:5000/get_windows/${examination_id}`)
+    const response = await axios.get(`http://127.0.0.1:5000/get_exam_slots/${examination_id}`)
     slots.value = response.data.data
     exam_name.value = response.data.exam_name
     booking_started.value = response.data.booking_started
@@ -75,13 +75,13 @@ const startEdit = (slot) => {
     }
 }
 const saveSlot = async (id) => {
-    const response = await axios.post(`http://127.0.0.1:5000/save_window/${id}`, form.value)
+    const response = await axios.post(`http://127.0.0.1:5000/update_exam_slot/${id}`, form.value)
     message.value = response.data.message
     editing_id.value = null
     fetch_slots()
 }
 const removeSlot = async (id) => {
-    const response = await axios.post(`http://127.0.0.1:5000/delete_window/${id}`)
+    const response = await axios.post(`http://127.0.0.1:5000/delete_exam_slot/${id}`)
     message.value = response.data.message
     fetch_slots()
 }

@@ -1,9 +1,9 @@
 <template>
     <Navbar />
     <div>
-        <h1>Login</h1>
+        <h1>ExamNest Login</h1>
     </div>
-    <form @submit.prevent="handleLogin">
+    <form @submit.prevent="loginUser">
         <input type="email" v-model="email" placeholder="Email">
         <input type="password" v-model="password" placeholder="Password">
         <button type="submit">Login</button>
@@ -23,12 +23,12 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const response_data = ref('')
-const handleLogin = async () =>{
+const loginUser = async () =>{
     error.value = ''
     response_data.value = ''
     try{
         const response = await axios.post(
-            "http://127.0.0.1:5000/auth_login",
+            "http://127.0.0.1:5000/login_user",
             {
                 email:email.value,
                 password:password.value

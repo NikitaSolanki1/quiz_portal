@@ -45,14 +45,14 @@ const bookings = ref([])
 const message = ref('')
 
 const getBookings = async () => {
-    const response = await axios.post('http://127.0.0.1:5000/get_my_holds', {
+    const response = await axios.post('http://127.0.0.1:5000/get_my_slot_bookings', {
         user_id: localStorage.getItem('user_id')
     })
     bookings.value = response.data.data
 }
 
 const cancelSlot = async (slot_id) => {
-    const response = await axios.post(`http://127.0.0.1:5000/cancel_hold/${slot_id}`, {
+    const response = await axios.post(`http://127.0.0.1:5000/cancel_exam_slot/${slot_id}`, {
         user_id: localStorage.getItem('user_id')
     })
     message.value = response.data.message

@@ -1,4 +1,4 @@
-/* Simple global styles for SlotWise */
+/* ExamNest - simple college project styles */
 
 * {
   box-sizing: border-box;
@@ -6,137 +6,106 @@
 
 body {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
-  background: #f5f7fb;
-  color: #1e293b;
-  line-height: 1.5;
-}
-
-#app {
-  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f2f2f2;
+  color: #222;
+  line-height: 1.4;
 }
 
 h1 {
-  margin: 24px auto 12px;
-  padding: 0 24px;
-  max-width: 1100px;
-  font-size: 26px;
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 20px 24px 10px;
+  font-size: 24px;
 }
 
 h2 {
-  margin: 16px 0 10px;
-  font-size: 20px;
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 14px 0 8px;
+  font-size: 18px;
 }
 
 p {
-  margin: 8px auto;
-  padding: 0 24px;
-  max-width: 1100px;
+  margin: 8px 24px;
 }
 
-/* Forms stay in a neat box */
 form {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
-  margin: 16px auto 32px;
-  padding: 20px;
-  max-width: 520px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+  margin: 16px 24px 28px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #ccc;
 }
 
 input,
 select,
 textarea {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #94a3b8;
-  border-radius: 4px;
+  padding: 8px;
+  border: 1px solid #aaa;
   font-size: 14px;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #fff;
 }
 
 textarea {
-  min-height: 80px;
-  resize: vertical;
+  min-height: 70px;
 }
 
 button {
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: none;
-  border-radius: 4px;
-  background: #1e3a5f;
+  background: #444;
   color: #fff;
   cursor: pointer;
   font-size: 14px;
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 button:hover {
-  background: #254a78;
+  background: #222;
 }
 
 .links {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin: 16px auto;
-  padding: 0 24px;
-  max-width: 1100px;
+  gap: 8px;
+  margin: 12px 24px;
 }
 
 .links a {
-  background: #1e3a5f;
+  background: #444;
   color: #fff;
   text-decoration: none;
-  padding: 8px 12px;
-  border-radius: 4px;
+  padding: 8px 10px;
   font-size: 14px;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-.links a:hover {
-  background: #254a78;
 }
 
 table {
   width: calc(100% - 48px);
-  max-width: 1100px;
-  margin: 16px auto 32px;
+  margin: 12px 24px 28px;
   border-collapse: collapse;
   background: #fff;
-  border: 1px solid #cbd5e1;
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 th,
 td {
-  border: 1px solid #e2e8f0;
-  padding: 10px 12px;
+  border: 1px solid #ccc;
+  padding: 8px;
   text-align: left;
-  vertical-align: top;
   font-size: 14px;
 }
 
 th {
-  background: #dbe4f0;
-  color: #1e3a5f;
+  background: #e6e6e6;
 }
 
 td button {
-  margin: 2px 6px 2px 0;
+  margin-right: 6px;
 }
 
 .error {
-  color: #b91c1c;
+  color: #a00;
 }
 
 .success {
-  color: #166534;
+  color: #060;
 }

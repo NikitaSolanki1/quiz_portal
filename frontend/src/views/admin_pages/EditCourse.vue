@@ -32,7 +32,7 @@ const course_duration = ref('')
 const status = ref('Active')
 
 const get_course_data_specific   = async () => {
-    const response = await axios.post(`http://127.0.0.1:5000/get_module_by_id/${id}`)
+    const response = await axios.post(`http://127.0.0.1:5000/get_course_by_id/${id}`)
     response_frontend.value = response.data.data
     course_code.value = response_frontend.value.course_code
     course_name.value = response_frontend.value.name
@@ -41,7 +41,7 @@ const get_course_data_specific   = async () => {
     status.value = response_frontend.value.status
 }
 const edit_course = async () => {
-    const response = await axios.post(`http://127.0.0.1:5000/save_module/${id}`, 
+    const response = await axios.post(`http://127.0.0.1:5000/update_course/${id}`, 
     
     { 
         

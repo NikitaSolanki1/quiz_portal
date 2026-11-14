@@ -30,7 +30,7 @@ import { ref, onMounted } from 'vue'
 
 const results = ref([])
 onMounted(async () => {
-    const response = await axios.post('http://127.0.0.1:5000/get_my_grades', {
+    const response = await axios.post('http://127.0.0.1:5000/get_my_exam_results', {
         user_id: localStorage.getItem('user_id')
     })
     results.value = response.data.data

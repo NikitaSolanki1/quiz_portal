@@ -1,6 +1,6 @@
 <template>
   <nav>
-    <div class="nav-brand">SlotWise</div>
+    <div class="nav-brand">ExamNest</div>
     <div class="nav-links">
       <template v-if="loggedIn">
         <template v-if="role === 'admin'">
@@ -42,7 +42,6 @@
 <script setup>
 import { ref } from 'vue'
 
-const path = window.location.pathname
 const loggedIn = ref(!!localStorage.getItem('token'))
 const role = ref(localStorage.getItem('role') || '')
 
@@ -62,43 +61,34 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 24px;
-  background-color: #1e3a5f;
+  gap: 12px;
+  padding: 10px 20px;
+  background: #333;
   color: #fff;
 }
 .nav-brand {
-  font-weight: 700;
+  font-weight: bold;
   font-size: 18px;
-  color: #93c5fd;
-  white-space: nowrap;
 }
 .nav-links {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 14px;
   flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
 }
 a {
-  color: #e2e8f0;
+  color: #eee;
   text-decoration: none;
   font-size: 14px;
 }
 a:hover {
-  color: #fff;
   text-decoration: underline;
 }
 .logout-btn {
-  background: #b91c1c;
+  background: #a00;
   color: #fff;
   border: none;
-  padding: 6px 14px;
-  border-radius: 4px;
+  padding: 6px 10px;
   cursor: pointer;
-  font-size: 14px;
-}
-.logout-btn:hover {
-  background: #991b1b;
 }
 </style>

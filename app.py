@@ -1,3 +1,4 @@
+# ExamNest - college viva/exam slot booking portal
 from datetime import datetime, date, timedelta
 from celery.schedules import crontab
 from flask_mail import Mail, Message
@@ -10,9 +11,9 @@ from flask import Flask, jsonify, request, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///examnest_data.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'slotwise-desk-secret'
+app.config['SECRET_KEY'] = 'examnest-college-project-key'
 db = SQLAlchemy(app)
 from flask_caching import Cache
 CORS(app)
@@ -22,7 +23,7 @@ cache = Cache(app)
 
 
 
-def init_celery_worker(app):
+def create_celery(app):
     celery_app = Celery(
         app.import_name,
         broker='redis://localhost:6379/0',
@@ -32,12 +33,12 @@ def init_celery_worker(app):
     celery_app.conf.timezone = "Asia/Kolkata"
     celery_app.conf.enable_utc = False
     celery_app.conf.beat_schedule = {
-        "daily-viva-nudge": {
-            "task": "app.dispatch_viva_reminders",
+        "daily-exam-reminder": {
+            "task": "app.send_exam_reminders",
             "schedule": timedelta(seconds=10),
         },
-        "monthly-viva-digest": {
-    "task": "app.dispatch_monthly_mail",
+        "monthly-exam-report": {
+    "task": "app.send_monthly_report_mail",
     "schedule": timedelta(seconds=10),
 },
     }
@@ -47,51 +48,51 @@ def init_celery_worker(app):
                 return self.run(*args, **kwargs)
     celery_app.Task = ContextTask
     return celery_app
-celery = init_celery_worker(app)
+celery = create_celery(app)
 
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 587
+app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", "587"))
 app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = "lazyiitians17@gmail.com"
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME", "")
 app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD", "")
-app.config["MAIL_DEFAULT_SENDER"] = "lazyiitians17@gmail.com"
+app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_DEFAULT_SENDER", "noreply@examnest.local")
 mail = Mail(app)
 
 
 
-class Member(db.Model):
-    __tablename__ = 'members'
+class PortalUser(db.Model):
+    __tablename__ = 'portal_users'
     id = db.Column(db.Integer,primary_key=True)
     name = db.Column(db.String(50),nullable=False)
     email = db.Column(db.String(100),nullable=False)
     password = db.Column(db.String(100),nullable=False)
-    role = db.Column(db.String(100),nullable=False) # studnet , examinor , admin
+    role = db.Column(db.String(100),nullable=False)  # admin / examinor / user
     is_blocked = db.Column(db.Boolean,default=False)
 
 
 
-class LearnerCard(db.Model):
-    __tablename__ = 'learner_cards'
+class StudentProfile(db.Model):
+    __tablename__ = 'student_profiles'
     id = db.Column(db.Integer,primary_key=True)
     address = db.Column(db.String(100),nullable=False)
     phone = db.Column(db.String(100),nullable=False)
     past_experience = db.Column(db.String(100),nullable=False)
-    user_id = db.Column(db.Integer,db.ForeignKey('members.id'),nullable=False,unique=True)
+    user_id = db.Column(db.Integer,db.ForeignKey('portal_users.id'),nullable=False,unique=True)
 
 
-class StaffCard(db.Model):
-    __tablename__ = 'staff_cards'
+class ExaminerProfile(db.Model):
+    __tablename__ = 'examiner_profiles'
     id = db.Column(db.Integer,primary_key=True)
     address = db.Column(db.String(100),nullable=False)
     phone = db.Column(db.String(100),nullable=False)
     past_experience = db.Column(db.String(100),nullable=False)
     department = db.Column(db.String(100), nullable=False, default='')
-    user_id = db.Column(db.Integer,db.ForeignKey('members.id'),nullable=False,unique=True)
+    user_id = db.Column(db.Integer,db.ForeignKey('portal_users.id'),nullable=False,unique=True)
 
 
 
-class ModuleUnit(db.Model):
-    __tablename__ = 'module_units'
+class CourseInfo(db.Model):
+    __tablename__ = 'course_info'
     id = db.Column(db.Integer,primary_key=True)
     course_code = db.Column(db.String(50), nullable=False, default='')
     coures_name = db.Column(db.String(100),nullable=False)
@@ -102,8 +103,8 @@ class ModuleUnit(db.Model):
 
 
 
-class VivaTest(db.Model):
-    __tablename__ = 'viva_tests'
+class Examination(db.Model):
+    __tablename__ = 'examinations'
     id = db.Column(db.Integer, primary_key=True)
     exam_name = db.Column(db.String(100), nullable=False)
     exam_description = db.Column(db.String(100), nullable=False)
@@ -116,25 +117,25 @@ class VivaTest(db.Model):
     booking_end_time = db.Column(db.String(100), nullable=False)
     exam_start_date = db.Column(db.String(100), nullable=False)
     exam_end_date = db.Column(db.String(100), nullable=False)
-    course_id = db.Column(db.Integer, db.ForeignKey('module_units.id', ondelete='CASCADE'), nullable=False)
-    examinor_id = db.Column(db.Integer, db.ForeignKey('members.id'), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('course_info.id', ondelete='CASCADE'), nullable=False)
+    examinor_id = db.Column(db.Integer, db.ForeignKey('portal_users.id'), nullable=False)
     slot_open = db.Column(db.Boolean, default=False)
     booking_open = db.Column(db.Boolean, default=False)
     results_published = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(30), nullable=False, default='Draft')
 
-class ProbeQuery(db.Model):
-    __tablename__ = 'probe_queries'
+class ExamQuestion(db.Model):
+    __tablename__ = 'exam_questions'
     id = db.Column(db.Integer, primary_key=True)
     question = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(200), nullable=False, default='')
     marks = db.Column(db.Integer, nullable=False)
     weightage = db.Column(db.Integer, nullable=False, default=0)
-    exam_id = db.Column(db.Integer, db.ForeignKey('viva_tests.id', ondelete='CASCADE'), nullable=False)
+    exam_id = db.Column(db.Integer, db.ForeignKey('examinations.id', ondelete='CASCADE'), nullable=False)
 
 
-class TimeWindow(db.Model):
-    __tablename__ = 'time_windows'
+class ExamSlot(db.Model):
+    __tablename__ = 'exam_slots'
     id = db.Column(db.Integer, primary_key=True)
     slot_date = db.Column(db.String(100), nullable=False)
     slot_time = db.Column(db.String(100), nullable=False)
@@ -142,73 +143,73 @@ class TimeWindow(db.Model):
     capacity = db.Column(db.Integer, nullable=False)
     meeting_link = db.Column(db.String(200), nullable=False, default='')
     status = db.Column(db.String(20), nullable=False, default='Available')
-    exam_id = db.Column(db.Integer, db.ForeignKey('viva_tests.id', ondelete='CASCADE'), nullable=False)
-    examinor_id = db.Column(db.Integer, db.ForeignKey('members.id'), nullable=False)
+    exam_id = db.Column(db.Integer, db.ForeignKey('examinations.id', ondelete='CASCADE'), nullable=False)
+    examinor_id = db.Column(db.Integer, db.ForeignKey('portal_users.id'), nullable=False)
 
 
-class SeatHold(db.Model):
-    __tablename__ = 'seat_holds'
+class SlotBooking(db.Model):
+    __tablename__ = 'slot_bookings'
     id = db.Column(db.Integer, primary_key=True)
-    slot_id = db.Column(db.Integer, db.ForeignKey('time_windows.id', ondelete='CASCADE'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('members.id'), nullable=False)
+    slot_id = db.Column(db.Integer, db.ForeignKey('exam_slots.id', ondelete='CASCADE'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('portal_users.id'), nullable=False)
     booking_date = db.Column(db.String(30), nullable=False, default='')
     status = db.Column(db.String(20), nullable=False, default='Booked')
-    assigned_examinor_id = db.Column(db.Integer, db.ForeignKey('members.id'))
+    assigned_examinor_id = db.Column(db.Integer, db.ForeignKey('portal_users.id'))
 
 
-class PointAward(db.Model):
-    __tablename__ = 'point_awards'
+class QuestionScore(db.Model):
+    __tablename__ = 'question_scores'
     id = db.Column(db.Integer, primary_key=True)
-    booking_id = db.Column(db.Integer, db.ForeignKey('seat_holds.id', ondelete='CASCADE'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('probe_queries.id', ondelete='CASCADE'), nullable=False)
+    booking_id = db.Column(db.Integer, db.ForeignKey('slot_bookings.id', ondelete='CASCADE'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('exam_questions.id', ondelete='CASCADE'), nullable=False)
     marks = db.Column(db.Integer, nullable=False)
 
 
-class GradeNote(db.Model):
-    __tablename__ = 'grade_notes'
+class ExamResult(db.Model):
+    __tablename__ = 'exam_results'
     id = db.Column(db.Integer, primary_key=True)
-    booking_id = db.Column(db.Integer, db.ForeignKey('seat_holds.id', ondelete='CASCADE'), nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('members.id'), nullable=False)
-    examinor_id = db.Column(db.Integer, db.ForeignKey('members.id'), nullable=False)
+    booking_id = db.Column(db.Integer, db.ForeignKey('slot_bookings.id', ondelete='CASCADE'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('portal_users.id'), nullable=False)
+    examinor_id = db.Column(db.Integer, db.ForeignKey('portal_users.id'), nullable=False)
     total_marks = db.Column(db.Integer, nullable=False, default=0)
     remarks = db.Column(db.String(500), nullable=False, default='')
     evaluation_date = db.Column(db.String(30), nullable=False, default='')
     status = db.Column(db.String(30), nullable=False, default='Submitted')
 
-class CsvTask(db.Model):
-    __tablename__ = 'csv_tasks'
+class HistoryExport(db.Model):
+    __tablename__ = 'history_exports'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('members.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('portal_users.id'), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='pending')
     file_name = db.Column(db.String(200), nullable=False, default='')
     message = db.Column(db.String(300), nullable=False, default='')
     created_at = db.Column(db.String(30), nullable=False, default='')
 
-class BellNote(db.Model):
-    __tablename__ = 'bell_notes'
+class UserAlert(db.Model):
+    __tablename__ = 'user_alerts'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('members.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('portal_users.id'), nullable=False)
     message = db.Column(db.String(300), nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.String(30), nullable=False, default='')
 
-@celery.task(name="app.dispatch_viva_reminders")
-def dispatch_viva_reminders():
+@celery.task(name="app.send_exam_reminders")
+def send_exam_reminders():
     sent = 0
 
-    bookings = SeatHold.query.filter_by(status="Booked").all()
+    bookings = SlotBooking.query.filter_by(status="Booked").all()
     for booking in bookings:
-        slot = TimeWindow.query.filter_by(id=booking.slot_id).first()
+        slot = ExamSlot.query.filter_by(id=booking.slot_id).first()
         if not slot:
             continue
 
-        student = Member.query.filter_by(id=booking.user_id).first()
-        exam = VivaTest.query.filter_by(id=slot.exam_id).first()
+        student = PortalUser.query.filter_by(id=booking.user_id).first()
+        exam = Examination.query.filter_by(id=slot.exam_id).first()
         if not student or not student.email or not exam:
             continue
 
         examiner_id = booking.assigned_examinor_id or slot.examinor_id or exam.examinor_id
-        examiner = Member.query.filter_by(id=examiner_id).first() if examiner_id else None
+        examiner = PortalUser.query.filter_by(id=examiner_id).first() if examiner_id else None
 
         msg = Message(
             subject=f"Reminder: {exam.exam_name}",
@@ -239,19 +240,19 @@ CSV_FIELDS = [
 ]
 
 
-def collect_history_rows(user_id):
+def get_exam_history_rows(user_id):
     rows = []
-    for booking in SeatHold.query.filter_by(user_id=user_id).all():
-        slot = TimeWindow.query.filter_by(id=booking.slot_id).first()
-        exam = VivaTest.query.filter_by(id=slot.exam_id).first() if slot else None
-        course = ModuleUnit.query.filter_by(id=exam.course_id).first() if exam else None
+    for booking in SlotBooking.query.filter_by(user_id=user_id).all():
+        slot = ExamSlot.query.filter_by(id=booking.slot_id).first()
+        exam = Examination.query.filter_by(id=slot.exam_id).first() if slot else None
+        course = CourseInfo.query.filter_by(id=exam.course_id).first() if exam else None
         examiner_id = booking.assigned_examinor_id
         if not examiner_id and slot:
             examiner_id = slot.examinor_id
         if not examiner_id and exam:
             examiner_id = exam.examinor_id
-        examiner = Member.query.filter_by(id=examiner_id).first() if examiner_id else None
-        evaluation = GradeNote.query.filter_by(booking_id=booking.id).first()
+        examiner = PortalUser.query.filter_by(id=examiner_id).first() if examiner_id else None
+        evaluation = ExamResult.query.filter_by(booking_id=booking.id).first()
         rows.append({
             'Student ID': user_id,
             'Examination Name': exam.exam_name if exam else '',
@@ -263,9 +264,9 @@ def collect_history_rows(user_id):
         })
     return rows
 
-@celery.task(name='app.process_csv_export')
-def process_csv_export(job_id, user_id):
-    job = CsvTask.query.filter_by(id=job_id).first()
+@celery.task(name='app.run_history_export_task')
+def run_history_export_task(job_id, user_id):
+    job = HistoryExport.query.filter_by(id=job_id).first()
     try:
         os.makedirs(EXPORT_DIR, exist_ok=True)
         file_name = 'examination_history_' + str(user_id) + '_' + str(job_id) + '.csv'
@@ -273,11 +274,11 @@ def process_csv_export(job_id, user_id):
         with open(path, 'w', newline='', encoding='utf-8') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=CSV_FIELDS)
             writer.writeheader()
-            writer.writerows(collect_history_rows(user_id))
+            writer.writerows(get_exam_history_rows(user_id))
         job.status = 'completed'
         job.file_name = file_name
         job.message = 'Examination history CSV is ready'
-        alert = BellNote(
+        alert = UserAlert(
             user_id=user_id,
             message='Your examination history export is ready. Download the CSV from the dashboard.',
             created_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -286,11 +287,11 @@ def process_csv_export(job_id, user_id):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        job = CsvTask.query.filter_by(id=job_id).first()
+        job = HistoryExport.query.filter_by(id=job_id).first()
         if job:
             job.status = 'failed'
             job.message = 'Export failed'
-        db.session.add(BellNote(
+        db.session.add(UserAlert(
             user_id=user_id,
             message='Examination history export failed.',
             created_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -298,13 +299,13 @@ def process_csv_export(job_id, user_id):
         db.session.commit()
 
 
-@app.route('/begin_csv_export', methods=['POST'])
-def begin_csv_export():
+@app.route('/start_exam_history_export', methods=['POST'])
+def start_exam_history_export():
     data = request.json
-    user = Member.query.filter_by(id=data['user_id']).first()
+    user = PortalUser.query.filter_by(id=data['user_id']).first()
     if not user or user.role != 'user':
         return jsonify({'message': 'Only a student can export examination history'})
-    job = CsvTask(
+    job = HistoryExport(
         user_id=user.id,
         status='pending',
         message='Export started',
@@ -312,7 +313,7 @@ def begin_csv_export():
     )
     db.session.add(job)
     db.session.commit()
-    process_csv_export.delay(job.id, user.id)
+    run_history_export_task.delay(job.id, user.id)
     return jsonify({
         'message': 'Export started. You will get an alert when the CSV is ready.',
         'job_id': job.id
@@ -320,10 +321,10 @@ def begin_csv_export():
 
 
 
-@app.route('/poll_csv_status', methods=['POST'])
-def poll_csv_status():
+@app.route('/get_export_job_status', methods=['POST'])
+def get_export_job_status():
     data = request.json
-    job = CsvTask.query.filter_by(id=data['job_id'], user_id=data['user_id']).first()
+    job = HistoryExport.query.filter_by(id=data['job_id'], user_id=data['user_id']).first()
     if not job:
         return jsonify({'message': 'Export not found'})
     return jsonify({
@@ -333,11 +334,11 @@ def poll_csv_status():
         'job_id': job.id
     })
 
-@app.route('/read_my_bells', methods=['POST'])
-def read_my_bells():
+@app.route('/get_user_alerts', methods=['POST'])
+def get_user_alerts():
     data = request.json
     alerts = []
-    for alert in BellNote.query.filter_by(user_id=data['user_id']).order_by(BellNote.id.desc()).all():
+    for alert in UserAlert.query.filter_by(user_id=data['user_id']).order_by(UserAlert.id.desc()).all():
         alerts.append({
             'id': alert.id,
             'message': alert.message,
@@ -345,11 +346,11 @@ def read_my_bells():
             'is_read': alert.is_read
         })
     return jsonify({'data': alerts})
-@celery.task(name="app.dispatch_monthly_mail")
-def dispatch_monthly_mail():
-    exams = VivaTest.query.filter(VivaTest.status.in_(["Closed", "Completed"])).all()
-    bookings = SeatHold.query.all()
-    evaluations = GradeNote.query.all()
+@celery.task(name="app.send_monthly_report_mail")
+def send_monthly_report_mail():
+    exams = Examination.query.filter(Examination.status.in_(["Closed", "Completed"])).all()
+    bookings = SlotBooking.query.all()
+    evaluations = ExamResult.query.all()
 
     evaluated_students = {item.student_id for item in evaluations}
     evaluated_booking_ids = {item.booking_id for item in evaluations}
@@ -367,7 +368,7 @@ def dispatch_monthly_mail():
     if active:
         rows = ""
         for examiner_id, count in active:
-            examiner = Member.query.filter_by(id=examiner_id).first()
+            examiner = PortalUser.query.filter_by(id=examiner_id).first()
             name = examiner.name if examiner else "Unknown"
             rows += f"<li>{name} — {count} evaluation(s)</li>"
     else:
@@ -385,7 +386,7 @@ def dispatch_monthly_mail():
     <ul>{rows}</ul>
     """
 
-    admins = Member.query.filter_by(role="admin").all()
+    admins = PortalUser.query.filter_by(role="admin").all()
     sent = 0
     for admin in admins:
         if not admin.email:
@@ -399,23 +400,23 @@ def dispatch_monthly_mail():
         sent += 1
 
     return f"Monthly report sent to {sent} admin(s)"
-@app.route('/auth_register',methods=['POST'])
-def auth_register():
+@app.route('/register_student',methods=['POST'])
+def register_student():
     data = request.json
-    old_user = Member.query.filter_by(email=data['email']).first()
+    old_user = PortalUser.query.filter_by(email=data['email']).first()
     if old_user:
         return jsonify({'message': 'User already exists'})
-    new_user = Member(name=data['username'], email=data['email'], password=data['password'], role='user')
+    new_user = PortalUser(name=data['username'], email=data['email'], password=data['password'], role='user')
     db.session.add(new_user)
     db.session.commit()
     return jsonify({'message': 'Registered successfully'})
 
 
 
-@app.route('/auth_login',methods=['POST'])
-def auth_login():
+@app.route('/login_user',methods=['POST'])
+def login_user():
     data = request.json
-    user = Member.query.filter_by(email=data['email']).first()
+    user = PortalUser.query.filter_by(email=data['email']).first()
     if not user:
         return jsonify({'message': 'User not found'})
     if user.password != data['password']:
@@ -442,22 +443,22 @@ def auth_login():
     })
 
 
-@app.route('/create_module',methods=['POST'])
-def create_module():
+@app.route('/create_course',methods=['POST'])
+def create_course():
     data = request.json
     print(data)
-    new_course = ModuleUnit(course_code=data['courseCode'], coures_name=data['courseName'], coures_description=data['courseDescription'], course_duration=data['courseDuration'], status=data['status'])
+    new_course = CourseInfo(course_code=data['courseCode'], coures_name=data['courseName'], coures_description=data['courseDescription'], course_duration=data['courseDuration'], status=data['status'])
     db.session.add(new_course)
     db.session.commit()
     return jsonify({'message': 'Course created successfully'})
 
-@app.route('/get_staff_list',methods=['POST','GET'])
-def get_staff_list():
+@app.route('/get_examiners',methods=['POST','GET'])
+def get_examiners():
     all_examinors_list = []
 
-    all_examinors = Member.query.filter_by(role='examinor').all()             # i hve to fixed it latae i have to use.filter_by(role='examinor')
+    all_examinors = PortalUser.query.filter_by(role='examinor').all()             # i hve to fixed it latae i have to use.filter_by(role='examinor')
     for examinor in all_examinors:
-            profile = StaffCard.query.filter_by(user_id=examinor.id).first()
+            profile = ExaminerProfile.query.filter_by(user_id=examinor.id).first()
             all_examinors_list.append(
                 {
                     'id': examinor.id,
@@ -474,10 +475,10 @@ def get_staff_list():
 
 
 
-@app.route('/get_modules',methods=['POST'])
-def get_modules():
+@app.route('/get_courses',methods=['POST'])
+def get_courses():
     all_courses_list = []
-    all_courses = ModuleUnit.query.all()
+    all_courses = CourseInfo.query.all()
     for course in all_courses:
         all_courses_list.append(
             {
@@ -491,10 +492,10 @@ def get_modules():
         )
     return jsonify({'data': all_courses_list})
 
-@app.route('/get_module_by_id/<int:id>',methods=['POST'])
-def get_module_by_id(id):
+@app.route('/get_course_by_id/<int:id>',methods=['POST'])
+def get_course_by_id(id):
    
-    course = ModuleUnit.query.filter_by(id=id).first()
+    course = CourseInfo.query.filter_by(id=id).first()
    
     return jsonify({'data': {
         'course_code': course.course_code,
@@ -506,10 +507,10 @@ def get_module_by_id(id):
 
 
 
-@app.route('/save_module/<int:id>',methods=['POST'])
-def save_module(id):
+@app.route('/update_course/<int:id>',methods=['POST'])
+def update_course(id):
     data = request.json
-    course = ModuleUnit.query.filter_by(id=id).first()
+    course = CourseInfo.query.filter_by(id=id).first()
     course.course_code = data['course_code']
     course.coures_name = data['name']
     course.coures_description = data['description']
@@ -521,7 +522,7 @@ def save_module(id):
 
 from datetime import date, time
 
-def viva_already_ended(exam):
+def is_examination_finished(exam):
     if not exam:
         return False
     if exam.status == 'Completed':
@@ -534,30 +535,30 @@ def viva_already_ended(exam):
         return False
     return date.today() > exam_end
 
-def viva_dates_frozen(exam):
+def are_examination_dates_locked(exam):
     if not exam:
         return False
     if exam.status in ('Closed', 'Completed'):
         return True
-    slot_ids = [slot.id for slot in TimeWindow.query.filter_by(exam_id=exam.id).all()]
+    slot_ids = [slot.id for slot in ExamSlot.query.filter_by(exam_id=exam.id).all()]
     if not slot_ids:
         return False
-    return SeatHold.query.filter(
-        SeatHold.slot_id.in_(slot_ids),
-        SeatHold.status != 'Cancelled'
+    return SlotBooking.query.filter(
+        SlotBooking.slot_id.in_(slot_ids),
+        SlotBooking.status != 'Cancelled'
     ).count() > 0
 
-@app.route('/create_viva', methods=['POST'])
-def create_viva():
+@app.route('/create_examination', methods=['POST'])
+def create_examination():
     data = request.json
     print(data)
 
     exam_name = data['exam_name'].strip()
-    old_exam = VivaTest.query.filter(db.func.lower(VivaTest.exam_name) == exam_name.lower()).first()
+    old_exam = Examination.query.filter(db.func.lower(Examination.exam_name) == exam_name.lower()).first()
     if old_exam:
         return jsonify({'message': 'Exam already exists'})
 
-    new_exam = VivaTest(
+    new_exam = Examination(
         exam_name=exam_name,
         exam_description=data['exam_description'],
         exam_type=data['exam_type'],
@@ -580,13 +581,13 @@ def create_viva():
 
 
 
-@app.route('/create_staff_card', methods=['POST'])
-def create_staff_card():
+@app.route('/create_examiner_profile', methods=['POST'])
+def create_examiner_profile():
     data = request.json
-    old_profile = StaffCard.query.filter_by(user_id=data['user_id']).first()
+    old_profile = ExaminerProfile.query.filter_by(user_id=data['user_id']).first()
     if old_profile:
         return jsonify({'message': 'Profile already exists'})
-    new_profile = StaffCard(
+    new_profile = ExaminerProfile(
         address=data['address'],
         phone=data['phone'],
         past_experience=data['past_experience'],
@@ -597,58 +598,58 @@ def create_staff_card():
     db.session.commit()
     return jsonify({'message': 'Profile created successfully'})
 
-@app.route('/auth_register_staff',methods=['POST'])
-def auth_register_staff():
+@app.route('/register_examiner',methods=['POST'])
+def register_examiner():
     data = request.json
     print(data)
-    old_user = Member.query.filter_by(email=data['email']).first()
+    old_user = PortalUser.query.filter_by(email=data['email']).first()
     if old_user:
         return jsonify({'message': 'Examinor already exists'})
-    new_examinor = Member(name=data['username'], email=data['email'], password=data['password'], role='examinor')
+    new_examinor = PortalUser(name=data['username'], email=data['email'], password=data['password'], role='examinor')
     db.session.add(new_examinor)
     db.session.commit()
-    new_profile = StaffCard(address=data['address'], phone=data['phone'], past_experience=data['past_experience'], department=data['department'], user_id=new_examinor.id)
+    new_profile = ExaminerProfile(address=data['address'], phone=data['phone'], past_experience=data['past_experience'], department=data['department'], user_id=new_examinor.id)
     db.session.add(new_profile)
     db.session.commit()
     return jsonify({'message': 'Examinor registered successfully'})
 
-@app.route('/delete_module/<int:id>',methods=['POST'])
-def delete_module(id):
-    course = ModuleUnit.query.filter_by(id=id).first()
-    exams = VivaTest.query.filter_by(course_id=id).all()
+@app.route('/delete_course/<int:id>',methods=['POST'])
+def delete_course(id):
+    course = CourseInfo.query.filter_by(id=id).first()
+    exams = Examination.query.filter_by(course_id=id).all()
     for exam in exams:
-        ProbeQuery.query.filter_by(exam_id=exam.id).delete()
-        slots = TimeWindow.query.filter_by(exam_id=exam.id).all()
+        ExamQuestion.query.filter_by(exam_id=exam.id).delete()
+        slots = ExamSlot.query.filter_by(exam_id=exam.id).all()
         for slot in slots:
-            bookings = SeatHold.query.filter_by(slot_id=slot.id).all()
+            bookings = SlotBooking.query.filter_by(slot_id=slot.id).all()
             for booking in bookings:
-                PointAward.query.filter_by(booking_id=booking.id).delete()
-                GradeNote.query.filter_by(booking_id=booking.id).delete()
-            SeatHold.query.filter_by(slot_id=slot.id).delete()
-        TimeWindow.query.filter_by(exam_id=exam.id).delete()
-    VivaTest.query.filter_by(course_id=id).delete()
+                QuestionScore.query.filter_by(booking_id=booking.id).delete()
+                ExamResult.query.filter_by(booking_id=booking.id).delete()
+            SlotBooking.query.filter_by(slot_id=slot.id).delete()
+        ExamSlot.query.filter_by(exam_id=exam.id).delete()
+    Examination.query.filter_by(course_id=id).delete()
     db.session.delete(course)
     db.session.commit()
     return jsonify({'message': 'Course deleted successfully'})
 
-@app.route('/lock_staff/<int:id>',methods=['POST'])
-def lock_staff(id):
-    examinor = Member.query.filter_by(id=id).first()
+@app.route('/block_examiner/<int:id>',methods=['POST'])
+def block_examiner(id):
+    examinor = PortalUser.query.filter_by(id=id).first()
     examinor.is_blocked = True
     db.session.commit()
     return jsonify({'message': 'Examinor blocked successfully'})
 
-@app.route('/unlock_staff/<int:id>',methods=['POST'])
-def unlock_staff(id):
-    examinor = Member.query.filter_by(id=id).first()
+@app.route('/unblock_examiner/<int:id>',methods=['POST'])
+def unblock_examiner(id):
+    examinor = PortalUser.query.filter_by(id=id).first()
     examinor.is_blocked = False
     db.session.commit()
     return jsonify({'message': 'Examinor unblocked successfully'})
 
-@app.route('/get_vivas',methods=['POST','GET'])
-def get_vivas():
+@app.route('/get_examinations',methods=['POST','GET'])
+def get_examinations():
     all_examinations_list = []
-    all_examinations = VivaTest.query.all()
+    all_examinations = Examination.query.all()
     for examination in all_examinations:
         all_examinations_list.append(
             {
@@ -670,25 +671,25 @@ def get_vivas():
                 'duration': examination.duration,
                 'max_marks': examination.max_marks,
                 'status': examination.status,
-                'exam_date_locked': viva_dates_frozen(examination)
+                'exam_date_locked': are_examination_dates_locked(examination)
             }
         )
     return jsonify({'data': all_examinations_list})
 
-@app.route('/admin_viva_page/<int:exam_id>', methods=['GET', 'POST'])
-def admin_viva_page(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
-    course = ModuleUnit.query.filter_by(id=exam.course_id).first()
-    examinor = Member.query.filter_by(id=exam.examinor_id).first()
+@app.route('/get_admin_examination_detail/<int:exam_id>', methods=['GET', 'POST'])
+def get_admin_examination_detail(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
+    course = CourseInfo.query.filter_by(id=exam.course_id).first()
+    examinor = PortalUser.query.filter_by(id=exam.examinor_id).first()
     slots = []
-    for slot in TimeWindow.query.filter_by(exam_id=exam_id).all():
+    for slot in ExamSlot.query.filter_by(exam_id=exam_id).all():
         booked_names = []
         evaluated = False
-        for booking in SeatHold.query.filter_by(slot_id=slot.id).all():
-            student = Member.query.filter_by(id=booking.user_id).first()
+        for booking in SlotBooking.query.filter_by(slot_id=slot.id).all():
+            student = PortalUser.query.filter_by(id=booking.user_id).first()
             if student:
                 booked_names.append(student.name)
-            if GradeNote.query.filter_by(booking_id=booking.id).first() or PointAward.query.filter_by(booking_id=booking.id).first():
+            if ExamResult.query.filter_by(booking_id=booking.id).first() or QuestionScore.query.filter_by(booking_id=booking.id).first():
                 evaluated = True
                 if booking.status == 'Booked':
                     booking.status = 'Evaluated'
@@ -727,14 +728,14 @@ def admin_viva_page(exam_id):
         'slots': slots
     }})
 
-@app.route('/create_probe/<int:exam_id>',methods=['POST'])
-def create_probe(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
-    if viva_already_ended(exam):
+@app.route('/add_exam_question_bank/<int:exam_id>',methods=['POST'])
+def add_exam_question_bank(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
+    if is_examination_finished(exam):
         return jsonify({'message': 'Questions cannot be edited after the exam is finished'})
     data = request.json
     print(data)
-    new_question = ProbeQuery(
+    new_question = ExamQuestion(
         question=data['question'],
         description=data.get('description') or '',
         marks=data['marks'],
@@ -744,10 +745,10 @@ def create_probe(exam_id):
     db.session.commit()
     return jsonify({'message': 'Question bank created successfully'})
 
-@app.route('/get_probes/<int:exam_id>', methods=['GET', 'POST'])
-def get_probes(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
-    questions = ProbeQuery.query.filter_by(exam_id=exam_id).all()
+@app.route('/get_exam_questions/<int:exam_id>', methods=['GET', 'POST'])
+def get_exam_questions(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
+    questions = ExamQuestion.query.filter_by(exam_id=exam_id).all()
     rubric_list = []
     for question in questions:
         rubric_list.append({
@@ -763,16 +764,16 @@ def get_probes(exam_id):
         'exam_name': exam.exam_name if exam else '',
         'exam_end_date': exam.exam_end_date if exam else '',
         'status': exam.status if exam else '',
-        'can_edit': not viva_already_ended(exam)
+        'can_edit': not is_examination_finished(exam)
     })
 
-@app.route('/create_probe_item/<int:exam_id>', methods=['POST'])
-def create_probe_item(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
-    if viva_already_ended(exam):
+@app.route('/create_exam_question/<int:exam_id>', methods=['POST'])
+def create_exam_question(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
+    if is_examination_finished(exam):
         return jsonify({'message': 'Questions cannot be edited after the exam is finished'})
     data = request.json
-    new_question = ProbeQuery(
+    new_question = ExamQuestion(
         question=data['criterion'],
         description=data['description'],
         marks=data['marks'],
@@ -783,12 +784,12 @@ def create_probe_item(exam_id):
     db.session.commit()
     return jsonify({'message': 'Rubric created successfully'})
 
-@app.route('/save_probe_item/<int:id>', methods=['POST'])
-def save_probe_item(id):
+@app.route('/update_exam_question/<int:id>', methods=['POST'])
+def update_exam_question(id):
     data = request.json
-    question = ProbeQuery.query.filter_by(id=id).first()
-    exam = VivaTest.query.filter_by(id=question.exam_id).first()
-    if viva_already_ended(exam):
+    question = ExamQuestion.query.filter_by(id=id).first()
+    exam = Examination.query.filter_by(id=question.exam_id).first()
+    if is_examination_finished(exam):
         return jsonify({'message': 'Questions cannot be edited after the exam is finished'})
     question.question = data['criterion']
     question.description = data['description']
@@ -797,21 +798,21 @@ def save_probe_item(id):
     db.session.commit()
     return jsonify({'message': 'Rubric updated successfully'})
 
-@app.route('/delete_probe_item/<int:id>', methods=['POST'])
-def delete_probe_item(id):
-    question = ProbeQuery.query.filter_by(id=id).first()
-    exam = VivaTest.query.filter_by(id=question.exam_id).first()
-    if viva_already_ended(exam):
+@app.route('/delete_exam_question/<int:id>', methods=['POST'])
+def delete_exam_question(id):
+    question = ExamQuestion.query.filter_by(id=id).first()
+    exam = Examination.query.filter_by(id=question.exam_id).first()
+    if is_examination_finished(exam):
         return jsonify({'message': 'Questions cannot be edited after the exam is finished'})
-    PointAward.query.filter_by(question_id=id).delete()
+    QuestionScore.query.filter_by(question_id=id).delete()
     db.session.delete(question)
     db.session.commit()
     return jsonify({'message': 'Rubric deleted successfully'})
 
-@app.route('/create_window/<int:exam_id>', methods=['POST'])
-def create_window(exam_id):
+@app.route('/create_exam_slot/<int:exam_id>', methods=['POST'])
+def create_exam_slot(exam_id):
     data = request.json
-    exam = VivaTest.query.filter_by(id=exam_id).first()
+    exam = Examination.query.filter_by(id=exam_id).first()
     if not exam:
         return jsonify({'message': 'Examination not found'})
 
@@ -829,7 +830,7 @@ def create_window(exam_id):
     if slot_date < exam_start or slot_date > exam_end:
         return jsonify({'message': 'Give the slot on an examination date, from the exam start date to the exam end date'})
 
-    new_slot = TimeWindow(
+    new_slot = ExamSlot(
         slot_date=data['slot_date'],
         slot_time=data['slot_time'],
         end_time=data['end_time'],
@@ -843,14 +844,14 @@ def create_window(exam_id):
     db.session.commit()
     return jsonify({'message': 'Slot created successfully'})
 
-@app.route('/get_windows/<int:exam_id>', methods=['GET', 'POST'])
-def get_windows(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
-    slots = TimeWindow.query.filter_by(exam_id=exam_id).all()
+@app.route('/get_exam_slots/<int:exam_id>', methods=['GET', 'POST'])
+def get_exam_slots(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
+    slots = ExamSlot.query.filter_by(exam_id=exam_id).all()
     slot_list = []
     for slot in slots:
-        examinor = Member.query.filter_by(id=slot.examinor_id).first()
-        taken = SeatHold.query.filter(SeatHold.slot_id == slot.id, SeatHold.status != 'Cancelled').count()
+        examinor = PortalUser.query.filter_by(id=slot.examinor_id).first()
+        taken = SlotBooking.query.filter(SlotBooking.slot_id == slot.id, SlotBooking.status != 'Cancelled').count()
         slot_list.append({
             'id': slot.id,
             'slot_date': slot.slot_date,
@@ -873,15 +874,15 @@ def get_windows(exam_id):
         'booking_started': booking_started
     })
 
-@app.route('/get_staff_vivas', methods=['POST'])
-def get_staff_vivas():
+@app.route('/get_assigned_examinations', methods=['POST'])
+def get_assigned_examinations():
     data = request.json
     examinor_id = data['examinor_id']
 
-    exams = VivaTest.query.filter_by(examinor_id=examinor_id).all()
+    exams = Examination.query.filter_by(examinor_id=examinor_id).all()
     assigned = []
     for examination in exams:
-        course = ModuleUnit.query.filter_by(id=examination.course_id).first()
+        course = CourseInfo.query.filter_by(id=examination.course_id).first()
         assigned.append({
             'id': examination.id,
             'name': examination.exam_name,
@@ -902,9 +903,9 @@ def get_staff_vivas():
         })
     return jsonify({'data': assigned, 'message': 'Assigned examinations'})
 
-@app.route('/open_windows/<int:exam_id>', methods=['POST'])
-def open_windows(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
+@app.route('/open_exam_slots/<int:exam_id>', methods=['POST'])
+def open_exam_slots(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
     if not exam:
         return jsonify({'message': 'Examination not found'})
     exam.slot_open = True
@@ -913,9 +914,9 @@ def open_windows(exam_id):
     db.session.commit()
     return jsonify({'message': 'Slot creation opened'})
 
-@app.route('/close_windows/<int:exam_id>', methods=['POST'])
-def close_windows(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
+@app.route('/close_exam_slots/<int:exam_id>', methods=['POST'])
+def close_exam_slots(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
     if not exam:
         return jsonify({'message': 'Examination not found'})
     exam.slot_open = False
@@ -925,13 +926,13 @@ def close_windows(exam_id):
     return jsonify({'message': 'Slot creation closed'})
 
 
-@app.route('/create_learner_card', methods=['POST'])
-def create_learner_card():
+@app.route('/create_student_profile', methods=['POST'])
+def create_student_profile():
     data = request.json
-    old_profile = LearnerCard.query.filter_by(user_id=data['user_id']).first()
+    old_profile = StudentProfile.query.filter_by(user_id=data['user_id']).first()
     if old_profile:
         return jsonify({'message': 'Profile already exists'})
-    new_user_profile = LearnerCard(
+    new_user_profile = StudentProfile(
         address=data['address'],
         phone=data['phone'],
         past_experience=data['past_experience'],
@@ -941,10 +942,10 @@ def create_learner_card():
     db.session.commit()
     return jsonify({'message': 'User profile created successfully'})
 
-@app.route('/get_learner_card', methods=['POST'])
-def get_learner_card():
+@app.route('/get_student_profile', methods=['POST'])
+def get_student_profile():
     data = request.json
-    profile = LearnerCard.query.filter_by(user_id=data['user_id']).first()
+    profile = StudentProfile.query.filter_by(user_id=data['user_id']).first()
     if not profile:
         return jsonify({'data': None})
     return jsonify({'data': {
@@ -955,26 +956,26 @@ def get_learner_card():
         'user_id': profile.user_id
     }})
 
-@app.route('/save_learner_card', methods=['POST'])
-def save_learner_card():
+@app.route('/update_student_profile', methods=['POST'])
+def update_student_profile():
     data = request.json
-    profile = LearnerCard.query.filter_by(user_id=data['user_id']).first()
+    profile = StudentProfile.query.filter_by(user_id=data['user_id']).first()
     profile.address = data['address']
     profile.phone = data['phone']
     profile.past_experience = data['past_experience']
     db.session.commit()
     return jsonify({'message': 'User profile updated successfully'})
 
-@app.route('/get_bookable_vivas', methods=['POST','GET'])
-def get_bookable_vivas():
+@app.route('/get_available_examinations', methods=['POST','GET'])
+def get_available_examinations():
     all_examinations_list = []
-    slots = TimeWindow.query.all()
+    slots = ExamSlot.query.all()
     for slot in slots:
-        examination = VivaTest.query.filter_by(id=slot.exam_id).first()
+        examination = Examination.query.filter_by(id=slot.exam_id).first()
         if slot.status == 'Cancelled':
             continue
-        course = ModuleUnit.query.filter_by(id=examination.course_id).first() if examination else None
-        taken = SeatHold.query.filter(SeatHold.slot_id == slot.id, SeatHold.status != 'Cancelled').count()
+        course = CourseInfo.query.filter_by(id=examination.course_id).first() if examination else None
+        taken = SlotBooking.query.filter(SlotBooking.slot_id == slot.id, SlotBooking.status != 'Cancelled').count()
         all_examinations_list.append({
             'id': slot.id,
             'exam_id': slot.exam_id,
@@ -990,27 +991,27 @@ def get_bookable_vivas():
         })
     return jsonify({'data1': all_examinations_list})
 
-@app.route('/hold_window/<int:slot_id>', methods=['POST'])
-def hold_window(slot_id):
+@app.route('/book_exam_slot/<int:slot_id>', methods=['POST'])
+def book_exam_slot(slot_id):
     data = request.json
-    slot = TimeWindow.query.filter_by(id=slot_id).first()
-    exam = VivaTest.query.filter_by(id=slot.exam_id).first()
+    slot = ExamSlot.query.filter_by(id=slot_id).first()
+    exam = Examination.query.filter_by(id=slot.exam_id).first()
     today = date.today().isoformat()
     if exam.status == 'Closed' or exam.status == 'Completed':
         return jsonify({'message': 'Booking is closed'})
     opened_by_admin = exam.booking_open or exam.status == 'Booking Open'
     if not opened_by_admin and (today < exam.booking_start_time or today > exam.booking_end_time):
         return jsonify({'message': 'Booking is closed'})
-    old_booking = SeatHold.query.filter_by(slot_id=slot_id, user_id=data['user_id'], status='Booked').first()
+    old_booking = SlotBooking.query.filter_by(slot_id=slot_id, user_id=data['user_id'], status='Booked').first()
     if old_booking:
         return jsonify({'message': 'Slot already booked'})
-    booked_count = SeatHold.query.filter(SeatHold.slot_id == slot_id, SeatHold.status != 'Cancelled').count()
+    booked_count = SlotBooking.query.filter(SlotBooking.slot_id == slot_id, SlotBooking.status != 'Cancelled').count()
     if booked_count >= slot.capacity:
         return jsonify({'message': 'Slot is full'})
-    new_booking = SeatHold(slot_id=slot_id, user_id=data['user_id'], booking_date=today, status='Booked')
+    new_booking = SlotBooking(slot_id=slot_id, user_id=data['user_id'], booking_date=today, status='Booked')
     db.session.add(new_booking)
     db.session.commit()
-    booked_count = SeatHold.query.filter(SeatHold.slot_id == slot_id, SeatHold.status != 'Cancelled').count()
+    booked_count = SlotBooking.query.filter(SlotBooking.slot_id == slot_id, SlotBooking.status != 'Cancelled').count()
     if booked_count >= slot.capacity:
         slot.status = 'Full'
     else:
@@ -1018,12 +1019,12 @@ def hold_window(slot_id):
     db.session.commit()
     return jsonify({'message': 'Slot booked successfully'})
 
-@app.route('/viva_detail_page/<int:exam_id>', methods=['POST'])
-def viva_detail_page(exam_id):
+@app.route('/get_examination_detail/<int:exam_id>', methods=['POST'])
+def get_examination_detail(exam_id):
     data = request.json
-    exam = VivaTest.query.filter_by(id=exam_id).first()
-    course = ModuleUnit.query.filter_by(id=exam.course_id).first()
-    examinor = Member.query.filter_by(id=exam.examinor_id).first()
+    exam = Examination.query.filter_by(id=exam_id).first()
+    course = CourseInfo.query.filter_by(id=exam.course_id).first()
+    examinor = PortalUser.query.filter_by(id=exam.examinor_id).first()
     today = date.today().isoformat()
     if exam.status == 'Closed' or exam.status == 'Completed':
         booking_open = False
@@ -1032,11 +1033,11 @@ def viva_detail_page(exam_id):
     else:
         booking_open = exam.booking_start_time <= today <= exam.booking_end_time
     slots = []
-    for slot in TimeWindow.query.filter_by(exam_id=exam_id).all():
+    for slot in ExamSlot.query.filter_by(exam_id=exam_id).all():
         if slot.status == 'Cancelled':
             continue
-        booking = SeatHold.query.filter_by(slot_id=slot.id, user_id=data['user_id'], status='Booked').first()
-        taken = SeatHold.query.filter(SeatHold.slot_id == slot.id, SeatHold.status != 'Cancelled').count()
+        booking = SlotBooking.query.filter_by(slot_id=slot.id, user_id=data['user_id'], status='Booked').first()
+        taken = SlotBooking.query.filter(SlotBooking.slot_id == slot.id, SlotBooking.status != 'Cancelled').count()
         slots.append({
             'id': slot.id,
             'slot_date': slot.slot_date,
@@ -1068,22 +1069,22 @@ def viva_detail_page(exam_id):
         'slots': slots
     }})
 
-@app.route('/cancel_hold/<int:slot_id>', methods=['POST'])
-def cancel_hold(slot_id):
+@app.route('/cancel_exam_slot/<int:slot_id>', methods=['POST'])
+def cancel_exam_slot(slot_id):
     data = request.json
-    slot = TimeWindow.query.filter_by(id=slot_id).first()
-    exam = VivaTest.query.filter_by(id=slot.exam_id).first()
+    slot = ExamSlot.query.filter_by(id=slot_id).first()
+    exam = Examination.query.filter_by(id=slot.exam_id).first()
     today = date.today().isoformat()
     opened_by_admin = exam.booking_open or exam.status == 'Booking Open'
     if exam.status == 'Closed' or exam.status == 'Completed':
         return jsonify({'message': 'Booking period is closed'})
     if not opened_by_admin and (today < exam.booking_start_time or today > exam.booking_end_time):
         return jsonify({'message': 'Booking period is closed'})
-    booking = SeatHold.query.filter_by(slot_id=slot_id, user_id=data['user_id'], status='Booked').first()
+    booking = SlotBooking.query.filter_by(slot_id=slot_id, user_id=data['user_id'], status='Booked').first()
     if not booking:
         return jsonify({'message': 'Slot is not booked'})
     booking.status = 'Cancelled'
-    taken = SeatHold.query.filter(SeatHold.slot_id == slot_id, SeatHold.status != 'Cancelled').count()
+    taken = SlotBooking.query.filter(SlotBooking.slot_id == slot_id, SlotBooking.status != 'Cancelled').count()
     if taken >= slot.capacity:
         slot.status = 'Full'
     else:
@@ -1091,16 +1092,16 @@ def cancel_hold(slot_id):
     db.session.commit()
     return jsonify({'message': 'Slot cancelled successfully'})
 
-@app.route('/get_my_holds', methods=['POST'])
-def get_my_holds():
+@app.route('/get_my_slot_bookings', methods=['POST'])
+def get_my_slot_bookings():
     data = request.json
     today = date.today().isoformat()
-    bookings = SeatHold.query.filter_by(user_id=data['user_id']).all()
+    bookings = SlotBooking.query.filter_by(user_id=data['user_id']).all()
     booking_list = []
     for booking in bookings:
-        slot = TimeWindow.query.filter_by(id=booking.slot_id).first()
-        exam = VivaTest.query.filter_by(id=slot.exam_id).first()
-        evaluation = GradeNote.query.filter_by(booking_id=booking.id).first()
+        slot = ExamSlot.query.filter_by(id=booking.slot_id).first()
+        exam = Examination.query.filter_by(id=slot.exam_id).first()
+        evaluation = ExamResult.query.filter_by(booking_id=booking.id).first()
         booking_open = False
         if exam and exam.status != 'Closed' and exam.status != 'Completed':
             if exam.booking_open or exam.status == 'Booking Open':
@@ -1123,17 +1124,17 @@ def get_my_holds():
         })
     return jsonify({'data': booking_list})
 
-@app.route('/get_staff_holds', methods=['POST'])
-def get_staff_holds():
+@app.route('/get_examiner_slot_bookings', methods=['POST'])
+def get_examiner_slot_bookings():
     data = request.json
     examinor_id = str(data['examinor_id'])
     booking_list = []
-    bookings = SeatHold.query.all()
+    bookings = SlotBooking.query.all()
     for booking in bookings:
-        slot = TimeWindow.query.filter_by(id=booking.slot_id).first()
+        slot = ExamSlot.query.filter_by(id=booking.slot_id).first()
         if not slot:
             continue
-        exam = VivaTest.query.filter_by(id=slot.exam_id).first()
+        exam = Examination.query.filter_by(id=slot.exam_id).first()
         if not exam:
             continue
         if booking.status == 'Cancelled':
@@ -1141,9 +1142,9 @@ def get_staff_holds():
         effective_id = booking.assigned_examinor_id if booking.assigned_examinor_id else slot.examinor_id
         if str(effective_id) != examinor_id:
             continue
-        student = Member.query.filter_by(id=booking.user_id).first()
-        evaluation = GradeNote.query.filter_by(booking_id=booking.id).first()
-        given_marks = PointAward.query.filter_by(booking_id=booking.id).all()
+        student = PortalUser.query.filter_by(id=booking.user_id).first()
+        evaluation = ExamResult.query.filter_by(booking_id=booking.id).first()
+        given_marks = QuestionScore.query.filter_by(booking_id=booking.id).all()
         total_marks = sum(mark.marks for mark in given_marks)
         booking_list.append({
             'id': booking.id,
@@ -1157,16 +1158,16 @@ def get_staff_holds():
         })
     return jsonify({'data': booking_list})
 
-@app.route('/score_hold/<int:booking_id>', methods=['GET', 'POST'])
-def score_hold(booking_id):
-    booking = SeatHold.query.filter_by(id=booking_id).first()
-    slot = TimeWindow.query.filter_by(id=booking.slot_id).first()
-    exam = VivaTest.query.filter_by(id=slot.exam_id).first()
-    student = Member.query.filter_by(id=booking.user_id).first()
+@app.route('/submit_exam_marks/<int:booking_id>', methods=['GET', 'POST'])
+def submit_exam_marks(booking_id):
+    booking = SlotBooking.query.filter_by(id=booking_id).first()
+    slot = ExamSlot.query.filter_by(id=booking.slot_id).first()
+    exam = Examination.query.filter_by(id=slot.exam_id).first()
+    student = PortalUser.query.filter_by(id=booking.user_id).first()
     if request.method == 'GET':
         questions = []
-        for question in ProbeQuery.query.filter_by(exam_id=exam.id).all():
-            given = PointAward.query.filter_by(booking_id=booking_id, question_id=question.id).first()
+        for question in ExamQuestion.query.filter_by(exam_id=exam.id).all():
+            given = QuestionScore.query.filter_by(booking_id=booking_id, question_id=question.id).first()
             questions.append({
                 'id': question.id,
                 'criterion': question.question,
@@ -1175,7 +1176,7 @@ def score_hold(booking_id):
                 'weightage': question.weightage,
                 'marks': given.marks if given else ''
             })
-        evaluation = GradeNote.query.filter_by(booking_id=booking_id).first()
+        evaluation = ExamResult.query.filter_by(booking_id=booking_id).first()
         return jsonify({'data': {
             'booking_id': booking.id,
             'exam_name': exam.exam_name if exam else '',
@@ -1186,16 +1187,16 @@ def score_hold(booking_id):
     data = request.json
     total = 0
     for item in data['rubrics']:
-        question = ProbeQuery.query.filter_by(id=item['question_id']).first()
+        question = ExamQuestion.query.filter_by(id=item['question_id']).first()
         if int(item['marks']) > question.marks:
             return jsonify({'message': 'Marks cannot be more than rubric marks'})
-        given = PointAward.query.filter_by(booking_id=booking_id, question_id=item['question_id']).first()
+        given = QuestionScore.query.filter_by(booking_id=booking_id, question_id=item['question_id']).first()
         if given:
             given.marks = item['marks']
         else:
-            db.session.add(PointAward(booking_id=booking_id, question_id=item['question_id'], marks=item['marks']))
+            db.session.add(QuestionScore(booking_id=booking_id, question_id=item['question_id'], marks=item['marks']))
         total = total + int(item['marks'])
-    evaluation = GradeNote.query.filter_by(booking_id=booking_id).first()
+    evaluation = ExamResult.query.filter_by(booking_id=booking_id).first()
     examinor_id = booking.assigned_examinor_id if booking.assigned_examinor_id else slot.examinor_id
     if evaluation:
         evaluation.total_marks = total
@@ -1204,31 +1205,31 @@ def score_hold(booking_id):
         evaluation.status = 'Submitted'
         evaluation.examinor_id = examinor_id
     else:
-        db.session.add(GradeNote(booking_id=booking.id, student_id=booking.user_id, examinor_id=examinor_id, total_marks=total, remarks=data['remarks'], evaluation_date=str(date.today()), status='Submitted'))
+        db.session.add(ExamResult(booking_id=booking.id, student_id=booking.user_id, examinor_id=examinor_id, total_marks=total, remarks=data['remarks'], evaluation_date=str(date.today()), status='Submitted'))
     if booking.status == 'Booked':
         booking.status = 'Evaluated'
     db.session.commit()
     return jsonify({'message': 'Marks saved successfully'})
 
 
-@app.route('/admin_overview', methods=['POST', 'GET'])
+@app.route('/get_admin_dashboard_stats', methods=['POST', 'GET'])
 @cache.cached(timeout=60)
-def admin_overview():
+def get_admin_dashboard_stats():
     print("Fetching data from DATABASE")
 
     return jsonify({'data': {
-        'courses': ModuleUnit.query.count(),
-        'exams': VivaTest.query.count(),
-        'students': Member.query.filter_by(role='user').count(),
-        'examinors': Member.query.filter_by(role='examinor').count(),
-        'slots': TimeWindow.query.count(),
-        'bookings': SeatHold.query.count()
+        'courses': CourseInfo.query.count(),
+        'exams': Examination.query.count(),
+        'students': PortalUser.query.filter_by(role='user').count(),
+        'examinors': PortalUser.query.filter_by(role='examinor').count(),
+        'slots': ExamSlot.query.count(),
+        'bookings': SlotBooking.query.count()
     }})
 
-@app.route('/save_viva/<int:exam_id>', methods=['POST'])
-def save_viva(exam_id):
+@app.route('/update_examination/<int:exam_id>', methods=['POST'])
+def update_examination(exam_id):
     data = request.json
-    exam = VivaTest.query.filter_by(id=exam_id).first()
+    exam = Examination.query.filter_by(id=exam_id).first()
     exam.exam_name = data['exam_name']
     exam.exam_description = data['exam_description']
     exam.exam_type = data['exam_type']
@@ -1242,14 +1243,14 @@ def save_viva(exam_id):
     new_end = str(data['exam_end_date'])[:10]
     old_start = str(exam.exam_start_date)[:10]
     old_end = str(exam.exam_end_date)[:10]
-    if viva_dates_frozen(exam) and (new_start != old_start or new_end != old_end):
+    if are_examination_dates_locked(exam) and (new_start != old_start or new_end != old_end):
         db.session.rollback()
         return jsonify({'message': 'Exam date cannot be changed after booking is closed or a booking has happened'})
     exam.exam_start_date = data['exam_start_date']
     exam.exam_end_date = data['exam_end_date']
     exam.course_id = data['course_id']
     if str(data['examinor_id']) != str(exam.examinor_id):
-        conflict = staff_time_clash(exam, data['examinor_id'])
+        conflict = has_examiner_time_conflict(exam, data['examinor_id'])
         if conflict:
             db.session.rollback()
             return jsonify({'message': conflict})
@@ -1265,102 +1266,102 @@ def save_viva(exam_id):
     db.session.commit()
     return jsonify({'message': 'Examination updated successfully'})
 
-@app.route('/delete_viva/<int:exam_id>', methods=['POST'])
-def delete_viva(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
-    slots = TimeWindow.query.filter_by(exam_id=exam_id).all()
+@app.route('/delete_examination/<int:exam_id>', methods=['POST'])
+def delete_examination(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
+    slots = ExamSlot.query.filter_by(exam_id=exam_id).all()
     for slot in slots:
-        bookings = SeatHold.query.filter_by(slot_id=slot.id).all()
+        bookings = SlotBooking.query.filter_by(slot_id=slot.id).all()
         for booking in bookings:
-            PointAward.query.filter_by(booking_id=booking.id).delete()
-            GradeNote.query.filter_by(booking_id=booking.id).delete()
-        SeatHold.query.filter_by(slot_id=slot.id).delete()
-    TimeWindow.query.filter_by(exam_id=exam_id).delete()
-    ProbeQuery.query.filter_by(exam_id=exam_id).delete()
+            QuestionScore.query.filter_by(booking_id=booking.id).delete()
+            ExamResult.query.filter_by(booking_id=booking.id).delete()
+        SlotBooking.query.filter_by(slot_id=slot.id).delete()
+    ExamSlot.query.filter_by(exam_id=exam_id).delete()
+    ExamQuestion.query.filter_by(exam_id=exam_id).delete()
     db.session.delete(exam)
     db.session.commit()
     return jsonify({'message': 'Examination deleted successfully'})
 
-@app.route('/open_holds/<int:exam_id>', methods=['POST'])
-def open_holds(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
+@app.route('/open_exam_booking/<int:exam_id>', methods=['POST'])
+def open_exam_booking(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
     exam.booking_open = True
     exam.status = 'Booking Open'
     db.session.commit()
     return jsonify({'message': 'Student booking opened'})
 
-@app.route('/close_holds/<int:exam_id>', methods=['POST'])
-def close_holds(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
+@app.route('/close_exam_booking/<int:exam_id>', methods=['POST'])
+def close_exam_booking(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
     exam.booking_open = False
     if exam.status != 'Completed':
         exam.status = 'Closed'
     db.session.commit()
     return jsonify({'message': 'Student booking closed'})
 
-@app.route('/publish_grades/<int:exam_id>', methods=['POST'])
-def publish_grades(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
+@app.route('/publish_exam_results/<int:exam_id>', methods=['POST'])
+def publish_exam_results(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
     exam.results_published = True
-    for slot in TimeWindow.query.filter_by(exam_id=exam_id).all():
-        for booking in SeatHold.query.filter_by(slot_id=slot.id).all():
-            evaluation = GradeNote.query.filter_by(booking_id=booking.id).first()
+    for slot in ExamSlot.query.filter_by(exam_id=exam_id).all():
+        for booking in SlotBooking.query.filter_by(slot_id=slot.id).all():
+            evaluation = ExamResult.query.filter_by(booking_id=booking.id).first()
             if evaluation:
                 evaluation.status = 'Published'
     db.session.commit()
     return jsonify({'message': 'Results published'})
 
-def staff_time_clash(exam, examinor_id):
+def has_examiner_time_conflict(exam, examinor_id):
     new_id = int(examinor_id)
     if int(exam.examinor_id) == new_id:
         return None
-    exam_slots = [slot for slot in TimeWindow.query.filter_by(exam_id=exam.id).all() if slot.status != 'Cancelled']
+    exam_slots = [slot for slot in ExamSlot.query.filter_by(exam_id=exam.id).all() if slot.status != 'Cancelled']
     for slot in exam_slots:
-        start, end = window_bounds(slot.slot_time, slot.end_time, exam.duration)
-        for other in TimeWindow.query.all():
+        start, end = get_slot_time_range(slot.slot_time, slot.end_time, exam.duration)
+        for other in ExamSlot.query.all():
             if other.id == slot.id or other.exam_id == exam.id or other.status == 'Cancelled':
                 continue
             if str(other.slot_date)[:10] != str(slot.slot_date)[:10]:
                 continue
             owns_slot = int(other.examinor_id) == new_id
             if not owns_slot:
-                for booking in SeatHold.query.filter_by(slot_id=other.id).all():
+                for booking in SlotBooking.query.filter_by(slot_id=other.id).all():
                     if booking.status != 'Cancelled' and booking.assigned_examinor_id and int(booking.assigned_examinor_id) == new_id:
                         owns_slot = True
                         break
             if not owns_slot:
                 continue
-            other_exam = VivaTest.query.filter_by(id=other.exam_id).first()
+            other_exam = Examination.query.filter_by(id=other.exam_id).first()
             duration = other_exam.duration if other_exam else 30
-            other_start, other_end = window_bounds(other.slot_time, other.end_time, duration)
-            if bounds_clash(start, end, other_start, other_end):
-                person = Member.query.filter_by(id=new_id).first()
+            other_start, other_end = get_slot_time_range(other.slot_time, other.end_time, duration)
+            if do_times_overlap(start, end, other_start, other_end):
+                person = PortalUser.query.filter_by(id=new_id).first()
                 name = person.name if person else 'This examiner'
                 return name + ' is not free on ' + str(slot.slot_date)[:10] + ' at ' + str(slot.slot_time)
     return None
 
-@app.route('/change_viva_staff/<int:exam_id>', methods=['POST'])
-def change_viva_staff(exam_id):
+@app.route('/change_examination_examiner/<int:exam_id>', methods=['POST'])
+def change_examination_examiner(exam_id):
     data = request.json
-    exam = VivaTest.query.filter_by(id=exam_id).first()
-    conflict = staff_time_clash(exam, data['examinor_id'])
+    exam = Examination.query.filter_by(id=exam_id).first()
+    conflict = has_examiner_time_conflict(exam, data['examinor_id'])
     if conflict:
         return jsonify({'message': conflict})
     old_id = exam.examinor_id
     exam.examinor_id = data['examinor_id']
-    for slot in TimeWindow.query.filter_by(exam_id=exam_id).all():
+    for slot in ExamSlot.query.filter_by(exam_id=exam_id).all():
         if slot.examinor_id == old_id:
             slot.examinor_id = data['examinor_id']
-        for booking in SeatHold.query.filter_by(slot_id=slot.id).all():
+        for booking in SlotBooking.query.filter_by(slot_id=slot.id).all():
             booking.assigned_examinor_id = data['examinor_id']
     db.session.commit()
     return jsonify({'message': 'Examiner changed successfully'})
 
-@app.route('/save_window/<int:slot_id>', methods=['POST'])
-def save_window(slot_id):
+@app.route('/update_exam_slot/<int:slot_id>', methods=['POST'])
+def update_exam_slot(slot_id):
     data = request.json
-    slot = TimeWindow.query.filter_by(id=slot_id).first()
-    exam = VivaTest.query.filter_by(id=slot.exam_id).first()
+    slot = ExamSlot.query.filter_by(id=slot_id).first()
+    exam = Examination.query.filter_by(id=slot.exam_id).first()
     today = date.today().isoformat()
     if exam.booking_open or exam.status in ('Booking Open', 'Closed', 'Completed') or today >= exam.booking_start_time:
         return jsonify({'message': 'Slots can only be updated before student booking begins'})
@@ -1372,69 +1373,69 @@ def save_window(slot_id):
     db.session.commit()
     return jsonify({'message': 'Slot updated successfully'})
 
-@app.route('/delete_window/<int:slot_id>', methods=['POST'])
-def delete_window(slot_id):
-    slot = TimeWindow.query.filter_by(id=slot_id).first()
-    exam = VivaTest.query.filter_by(id=slot.exam_id).first()
+@app.route('/delete_exam_slot/<int:slot_id>', methods=['POST'])
+def delete_exam_slot(slot_id):
+    slot = ExamSlot.query.filter_by(id=slot_id).first()
+    exam = Examination.query.filter_by(id=slot.exam_id).first()
     today = date.today().isoformat()
     if exam.booking_open or exam.status in ('Booking Open', 'Closed', 'Completed') or today >= exam.booking_start_time:
         return jsonify({'message': 'Slots can only be removed before student booking begins'})
-    if SeatHold.query.filter(SeatHold.slot_id == slot_id, SeatHold.status != 'Cancelled').count():
+    if SlotBooking.query.filter(SlotBooking.slot_id == slot_id, SlotBooking.status != 'Cancelled').count():
         return jsonify({'message': 'Cannot remove a slot that has bookings'})
-    for booking in SeatHold.query.filter_by(slot_id=slot_id).all():
-        PointAward.query.filter_by(booking_id=booking.id).delete()
-        GradeNote.query.filter_by(booking_id=booking.id).delete()
+    for booking in SlotBooking.query.filter_by(slot_id=slot_id).all():
+        QuestionScore.query.filter_by(booking_id=booking.id).delete()
+        ExamResult.query.filter_by(booking_id=booking.id).delete()
         db.session.delete(booking)
     db.session.delete(slot)
     db.session.commit()
     return jsonify({'message': 'Slot removed successfully'})
 
-def as_minutes(value):
+def time_to_minutes(value):
     text = str(value or '')[:5]
     parts = text.split(':')
     if len(parts) < 2 or not parts[0] or not parts[1]:
         return None
     return int(parts[0]) * 60 + int(parts[1])
 
-def window_bounds(start_value, end_value, duration):
-    start = as_minutes(start_value)
-    end = as_minutes(end_value)
+def get_slot_time_range(start_value, end_value, duration):
+    start = time_to_minutes(start_value)
+    end = time_to_minutes(end_value)
     if start is not None and end is None:
         end = start + int(duration or 30)
     return start, end
 
-def bounds_clash(start_a, end_a, start_b, end_b):
+def do_times_overlap(start_a, end_a, start_b, end_b):
     if None in (start_a, end_a, start_b, end_b):
         return start_a is not None and start_a == start_b
     return start_a < end_b and start_b < end_a
 
-@app.route('/shift_window/<int:slot_id>', methods=['POST'])
-def shift_window(slot_id):
+@app.route('/reschedule_exam_slot/<int:slot_id>', methods=['POST'])
+def reschedule_exam_slot(slot_id):
     data = request.json
-    slot = TimeWindow.query.filter_by(id=slot_id).first()
+    slot = ExamSlot.query.filter_by(id=slot_id).first()
     if not slot:
         return jsonify({'message': 'Slot not found'})
-    for booking in SeatHold.query.filter_by(slot_id=slot.id).all():
+    for booking in SlotBooking.query.filter_by(slot_id=slot.id).all():
         if booking.status == 'Cancelled':
             continue
-        if GradeNote.query.filter_by(booking_id=booking.id).first() or PointAward.query.filter_by(booking_id=booking.id).first():
+        if ExamResult.query.filter_by(booking_id=booking.id).first() or QuestionScore.query.filter_by(booking_id=booking.id).first():
             return jsonify({'message': 'Marks have already been given, so this slot cannot be rescheduled'})
-    exam = VivaTest.query.filter_by(id=slot.exam_id).first()
+    exam = Examination.query.filter_by(id=slot.exam_id).first()
     slot_date = date.fromisoformat(str(data['slot_date'])[:10])
     exam_start = date.fromisoformat(str(exam.exam_start_date)[:10])
     exam_end = date.fromisoformat(str(exam.exam_end_date)[:10])
     if slot_date < exam_start or slot_date > exam_end:
         return jsonify({'message': 'Reschedule only on an exam date, from the exam start date to the exam end date'})
-    new_start, new_end = window_bounds(data['slot_time'], data.get('end_time') or slot.end_time, exam.duration)
+    new_start, new_end = get_slot_time_range(data['slot_time'], data.get('end_time') or slot.end_time, exam.duration)
     if new_start is None or new_end is None or new_end <= new_start:
         return jsonify({'message': 'Choose a free time on the exam date'})
-    for other in TimeWindow.query.filter_by(exam_id=slot.exam_id).all():
+    for other in ExamSlot.query.filter_by(exam_id=slot.exam_id).all():
         if other.id == slot.id or other.status == 'Cancelled':
             continue
         if str(other.slot_date)[:10] != str(data['slot_date'])[:10]:
             continue
-        other_start, other_end = window_bounds(other.slot_time, other.end_time, exam.duration)
-        if bounds_clash(new_start, new_end, other_start, other_end):
+        other_start, other_end = get_slot_time_range(other.slot_time, other.end_time, exam.duration)
+        if do_times_overlap(new_start, new_end, other_start, other_end):
             return jsonify({'message': 'That time is not free. Choose a free time on the exam date'})
     slot.slot_date = str(data['slot_date'])[:10]
     slot.slot_time = data['slot_time']
@@ -1442,53 +1443,53 @@ def shift_window(slot_id):
     db.session.commit()
     return jsonify({'message': 'Slot rescheduled successfully'})
 
-@app.route('/shift_hold/<int:booking_id>', methods=['POST'])
-def shift_hold(booking_id):
+@app.route('/reschedule_slot_booking/<int:booking_id>', methods=['POST'])
+def reschedule_slot_booking(booking_id):
     data = request.json
-    booking = SeatHold.query.filter_by(id=booking_id).first()
+    booking = SlotBooking.query.filter_by(id=booking_id).first()
     booking.slot_id = data['slot_id']
     db.session.commit()
     return jsonify({'message': 'Booking moved successfully'})
 
-@app.route('/change_hold_staff/<int:booking_id>', methods=['POST'])
-def change_hold_staff(booking_id):
+@app.route('/reassign_booking_examiner/<int:booking_id>', methods=['POST'])
+def reassign_booking_examiner(booking_id):
     data = request.json
-    booking = SeatHold.query.filter_by(id=booking_id).first()
+    booking = SlotBooking.query.filter_by(id=booking_id).first()
     booking.assigned_examinor_id = data['examinor_id']
     db.session.commit()
     return jsonify({'message': 'Examiner reassigned successfully'})
 
-@app.route('/get_learners', methods=['GET', 'POST'])
-def get_learners():
+@app.route('/get_all_students', methods=['GET', 'POST'])
+def get_all_students():
     students = []
-    for user in Member.query.filter_by(role='user').all():
+    for user in PortalUser.query.filter_by(role='user').all():
         students.append({'id': user.id, 'name': user.name, 'email': user.email, 'is_blocked': user.is_blocked})
     return jsonify({'data': students})
 
-@app.route('/lock_learner/<int:id>', methods=['POST'])
-def lock_learner(id):
-    student = Member.query.filter_by(id=id).first()
+@app.route('/block_student/<int:id>', methods=['POST'])
+def block_student(id):
+    student = PortalUser.query.filter_by(id=id).first()
     student.is_blocked = True
     db.session.commit()
     return jsonify({'message': 'Student blocked successfully'})
 
-@app.route('/unlock_learner/<int:id>', methods=['POST'])
-def unlock_learner(id):
-    student = Member.query.filter_by(id=id).first()
+@app.route('/unblock_student/<int:id>', methods=['POST'])
+def unblock_student(id):
+    student = PortalUser.query.filter_by(id=id).first()
     student.is_blocked = False
     db.session.commit()
     return jsonify({'message': 'Student unblocked successfully'})
 
-@app.route('/get_every_hold', methods=['GET', 'POST'])
-def get_every_hold():
+@app.route('/get_all_slot_bookings', methods=['GET', 'POST'])
+def get_all_slot_bookings():
     rows = []
-    for booking in SeatHold.query.all():
-        slot = TimeWindow.query.filter_by(id=booking.slot_id).first()
-        exam = VivaTest.query.filter_by(id=slot.exam_id).first() if slot else None
-        student = Member.query.filter_by(id=booking.user_id).first()
+    for booking in SlotBooking.query.all():
+        slot = ExamSlot.query.filter_by(id=booking.slot_id).first()
+        exam = Examination.query.filter_by(id=slot.exam_id).first() if slot else None
+        student = PortalUser.query.filter_by(id=booking.user_id).first()
         examinor_id = booking.assigned_examinor_id if booking.assigned_examinor_id else (slot.examinor_id if slot else None)
-        examinor = Member.query.filter_by(id=examinor_id).first()
-        evaluated = GradeNote.query.filter_by(booking_id=booking.id).first() is not None or PointAward.query.filter_by(booking_id=booking.id).first() is not None
+        examinor = PortalUser.query.filter_by(id=examinor_id).first()
+        evaluated = ExamResult.query.filter_by(booking_id=booking.id).first() is not None or QuestionScore.query.filter_by(booking_id=booking.id).first() is not None
         if evaluated and booking.status == 'Booked':
             booking.status = 'Evaluated'
         rows.append({
@@ -1511,23 +1512,23 @@ def get_every_hold():
         })
     db.session.commit()
     slots = []
-    for slot in TimeWindow.query.all():
+    for slot in ExamSlot.query.all():
         slots.append({'id': slot.id, 'exam_id': slot.exam_id, 'slot_date': slot.slot_date, 'slot_time': slot.slot_time})
     examinors = []
-    for user in Member.query.filter_by(role='examinor').all():
+    for user in PortalUser.query.filter_by(role='examinor').all():
         examinors.append({'id': user.id, 'name': user.name})
     return jsonify({'data': rows, 'slots': slots, 'examinors': examinors})
 
-@app.route('/get_every_window', methods=['GET', 'POST'])
-def get_every_window():
+@app.route('/get_all_exam_slots', methods=['GET', 'POST'])
+def get_all_exam_slots():
     rows = []
-    for slot in TimeWindow.query.all():
-        exam = VivaTest.query.filter_by(id=slot.exam_id).first()
-        examinor = Member.query.filter_by(id=slot.examinor_id).first()
-        taken_bookings = SeatHold.query.filter(SeatHold.slot_id == slot.id, SeatHold.status != 'Cancelled').all()
+    for slot in ExamSlot.query.all():
+        exam = Examination.query.filter_by(id=slot.exam_id).first()
+        examinor = PortalUser.query.filter_by(id=slot.examinor_id).first()
+        taken_bookings = SlotBooking.query.filter(SlotBooking.slot_id == slot.id, SlotBooking.status != 'Cancelled').all()
         booked_names = []
         for booking in taken_bookings:
-            student = Member.query.filter_by(id=booking.user_id).first()
+            student = PortalUser.query.filter_by(id=booking.user_id).first()
             if student:
                 booked_names.append(student.name)
         rows.append({
@@ -1547,47 +1548,47 @@ def get_every_window():
         })
     return jsonify({'data': rows})
 
-@app.route('/admin_lookup', methods=['POST'])
-def admin_lookup():
+@app.route('/search_admin_data', methods=['POST'])
+def search_admin_data():
     data = request.json
     query = data['query'].lower()
     students = []
-    for user in Member.query.filter_by(role='user').all():
+    for user in PortalUser.query.filter_by(role='user').all():
         if query in user.name.lower() or query in user.email.lower():
             students.append({'id': user.id, 'name': user.name, 'email': user.email, 'is_blocked': user.is_blocked})
     examinors = []
-    for user in Member.query.filter_by(role='examinor').all():
-        profile = StaffCard.query.filter_by(user_id=user.id).first()
+    for user in PortalUser.query.filter_by(role='examinor').all():
+        profile = ExaminerProfile.query.filter_by(user_id=user.id).first()
         department = profile.department if profile else ''
         if query in user.name.lower() or query in user.email.lower() or query in department.lower():
             examinors.append({'id': user.id, 'name': user.name, 'email': user.email, 'department': department, 'is_blocked': user.is_blocked})
     exams = []
-    for exam in VivaTest.query.all():
+    for exam in Examination.query.all():
         if query in exam.exam_name.lower() or query in exam.exam_type.lower() or query in exam.status.lower():
             exams.append({'id': exam.id, 'name': exam.exam_name, 'exam_type': exam.exam_type, 'status': exam.status})
     bookings = []
-    for booking in SeatHold.query.all():
-        slot = TimeWindow.query.filter_by(id=booking.slot_id).first()
-        exam = VivaTest.query.filter_by(id=slot.exam_id).first() if slot else None
-        student = Member.query.filter_by(id=booking.user_id).first()
+    for booking in SlotBooking.query.all():
+        slot = ExamSlot.query.filter_by(id=booking.slot_id).first()
+        exam = Examination.query.filter_by(id=slot.exam_id).first() if slot else None
+        student = PortalUser.query.filter_by(id=booking.user_id).first()
         text = ((student.name if student else '') + ' ' + (exam.exam_name if exam else '') + ' ' + booking.status).lower()
         if query in text:
             bookings.append({'id': booking.id, 'student_name': student.name if student else '', 'exam_name': exam.exam_name if exam else '', 'status': booking.status})
     return jsonify({'students': students, 'examinors': examinors, 'exams': exams, 'bookings': bookings})
 
-@app.route('/admin_reports', methods=['GET', 'POST'])
-def admin_reports():
+@app.route('/get_admin_reports', methods=['GET', 'POST'])
+def get_admin_reports():
     exam_rows = []
-    for exam in VivaTest.query.all():
+    for exam in Examination.query.all():
         booking_count = 0
         total = 0
         counted = 0
-        for slot in TimeWindow.query.filter_by(exam_id=exam.id).all():
-            for booking in SeatHold.query.filter_by(slot_id=slot.id).all():
+        for slot in ExamSlot.query.filter_by(exam_id=exam.id).all():
+            for booking in SlotBooking.query.filter_by(slot_id=slot.id).all():
                 if booking.status == 'Cancelled':
                     continue
                 booking_count = booking_count + 1
-                evaluation = GradeNote.query.filter_by(booking_id=booking.id).first()
+                evaluation = ExamResult.query.filter_by(booking_id=booking.id).first()
                 if evaluation:
                     total = total + evaluation.total_marks
                     counted = counted + 1
@@ -1603,35 +1604,35 @@ def admin_reports():
             'results_published': bool(exam.results_published)
         })
     return jsonify({'data': {
-        'courses': ModuleUnit.query.count(),
-        'exams': VivaTest.query.count(),
-        'students': Member.query.filter_by(role='user').count(),
-        'examinors': Member.query.filter_by(role='examinor').count(),
-        'slots': TimeWindow.query.count(),
-        'bookings': SeatHold.query.count(),
+        'courses': CourseInfo.query.count(),
+        'exams': Examination.query.count(),
+        'students': PortalUser.query.filter_by(role='user').count(),
+        'examinors': PortalUser.query.filter_by(role='examinor').count(),
+        'slots': ExamSlot.query.count(),
+        'bookings': SlotBooking.query.count(),
         'exam_rows': exam_rows
     }})
 
-@app.route('/staff_overview', methods=['POST'])
+@app.route('/get_examiner_dashboard_stats', methods=['POST'])
 @cache.cached(timeout=60)
-def staff_overview():
+def get_examiner_dashboard_stats():
     data = request.json
     examinor_id = str(data['examinor_id'])
-    assigned = VivaTest.query.filter_by(examinor_id=data['examinor_id']).count()
-    slots = TimeWindow.query.filter_by(examinor_id=data['examinor_id']).count()
+    assigned = Examination.query.filter_by(examinor_id=data['examinor_id']).count()
+    slots = ExamSlot.query.filter_by(examinor_id=data['examinor_id']).count()
     booked_students = 0
     pending = 0
-    for booking in SeatHold.query.all():
+    for booking in SlotBooking.query.all():
         if booking.status == 'Cancelled':
             continue
-        slot = TimeWindow.query.filter_by(id=booking.slot_id).first()
+        slot = ExamSlot.query.filter_by(id=booking.slot_id).first()
         if not slot:
             continue
         effective_id = booking.assigned_examinor_id if booking.assigned_examinor_id else slot.examinor_id
         if str(effective_id) != examinor_id:
             continue
         booked_students = booked_students + 1
-        evaluation = GradeNote.query.filter_by(booking_id=booking.id).first()
+        evaluation = ExamResult.query.filter_by(booking_id=booking.id).first()
         if not evaluation:
             pending = pending + 1
     return jsonify({'data': {
@@ -1641,25 +1642,25 @@ def staff_overview():
         'pending_evaluations': pending
     }})
 
-@app.route('/finish_viva/<int:exam_id>', methods=['POST'])
-def finish_viva(exam_id):
-    exam = VivaTest.query.filter_by(id=exam_id).first()
+@app.route('/complete_examination/<int:exam_id>', methods=['POST'])
+def complete_examination(exam_id):
+    exam = Examination.query.filter_by(id=exam_id).first()
     exam.status = 'Completed'
     exam.slot_open = False
     exam.booking_open = False
-    for slot in TimeWindow.query.filter_by(exam_id=exam_id).all():
+    for slot in ExamSlot.query.filter_by(exam_id=exam_id).all():
         if slot.status != 'Cancelled':
             slot.status = 'Completed'
-        for booking in SeatHold.query.filter_by(slot_id=slot.id).all():
+        for booking in SlotBooking.query.filter_by(slot_id=slot.id).all():
             if booking.status == 'Booked':
                 booking.status = 'Completed'
     db.session.commit()
     return jsonify({'message': 'Examination marked as completed'})
 
-@app.route('/get_staff_card', methods=['POST'])
-def get_staff_card():
+@app.route('/get_examiner_profile', methods=['POST'])
+def get_examiner_profile():
     data = request.json
-    profile = StaffCard.query.filter_by(user_id=data['user_id']).first()
+    profile = ExaminerProfile.query.filter_by(user_id=data['user_id']).first()
     if not profile:
         return jsonify({'data': None})
     return jsonify({'data': {
@@ -1670,10 +1671,10 @@ def get_staff_card():
         'department': profile.department
     }})
 
-@app.route('/save_staff_card', methods=['POST'])
-def save_staff_card():
+@app.route('/update_examiner_profile', methods=['POST'])
+def update_examiner_profile():
     data = request.json
-    profile = StaffCard.query.filter_by(user_id=data['user_id']).first()
+    profile = ExaminerProfile.query.filter_by(user_id=data['user_id']).first()
     profile.address = data['address']
     profile.phone = data['phone']
     profile.past_experience = data['past_experience']
@@ -1681,14 +1682,14 @@ def save_staff_card():
     db.session.commit()
     return jsonify({'message': 'Profile updated successfully'})
 
-@app.route('/save_staff_member/<int:id>', methods=['POST'])
-def save_staff_member(id):
+@app.route('/update_examiner_user/<int:id>', methods=['POST'])
+def update_examiner_user(id):
     data = request.json
-    examinor = Member.query.filter_by(id=id).first()
+    examinor = PortalUser.query.filter_by(id=id).first()
     examinor.name = data['name']
-    profile = StaffCard.query.filter_by(user_id=id).first()
+    profile = ExaminerProfile.query.filter_by(user_id=id).first()
     if not profile:
-        profile = StaffCard(address='', phone=data['phone'], past_experience='', department=data['department'], user_id=id)
+        profile = ExaminerProfile(address='', phone=data['phone'], past_experience='', department=data['department'], user_id=id)
         db.session.add(profile)
     else:
         profile.phone = data['phone']
@@ -1696,17 +1697,17 @@ def save_staff_member(id):
     db.session.commit()
     return jsonify({'message': 'Examiner updated successfully'})
 
-@app.route('/learner_home_data', methods=['POST'])
-def learner_home_data():
+@app.route('/get_student_dashboard', methods=['POST'])
+def get_student_dashboard():
     data = request.json
     today = date.today().isoformat()
     available_exams = 0
     available_slots = 0
     seen = []
-    for slot in TimeWindow.query.all():
+    for slot in ExamSlot.query.all():
         if slot.status == 'Cancelled':
             continue
-        exam = VivaTest.query.filter_by(id=slot.exam_id).first()
+        exam = Examination.query.filter_by(id=slot.exam_id).first()
         if not exam:
             continue
         open_now = False
@@ -1715,7 +1716,7 @@ def learner_home_data():
                 open_now = True
             elif exam.booking_start_time <= today <= exam.booking_end_time:
                 open_now = True
-        taken = SeatHold.query.filter(SeatHold.slot_id == slot.id, SeatHold.status != 'Cancelled').count()
+        taken = SlotBooking.query.filter(SlotBooking.slot_id == slot.id, SlotBooking.status != 'Cancelled').count()
         if open_now and taken < slot.capacity:
             available_slots = available_slots + 1
             if exam.id not in seen:
@@ -1725,11 +1726,11 @@ def learner_home_data():
     booked = 0
     results = 0
     examinations = []
-    for booking in SeatHold.query.filter_by(user_id=data['user_id']).all():
+    for booking in SlotBooking.query.filter_by(user_id=data['user_id']).all():
         if booking.status == 'Cancelled':
             continue
-        slot = TimeWindow.query.filter_by(id=booking.slot_id).first()
-        exam = VivaTest.query.filter_by(id=slot.exam_id).first() if slot else None
+        slot = ExamSlot.query.filter_by(id=booking.slot_id).first()
+        exam = Examination.query.filter_by(id=slot.exam_id).first() if slot else None
         if booking.status == 'Booked':
             booked = booked + 1
             if slot and slot.slot_date >= today:
@@ -1753,21 +1754,21 @@ def learner_home_data():
         'results': results
     }})
 
-@app.route('/get_my_grades', methods=['POST'])
-def get_my_grades():
+@app.route('/get_my_exam_results', methods=['POST'])
+def get_my_exam_results():
     data = request.json
     results = []
-    for booking in SeatHold.query.filter_by(user_id=data['user_id']).all():
+    for booking in SlotBooking.query.filter_by(user_id=data['user_id']).all():
         if booking.status == 'Cancelled':
             continue
-        slot = TimeWindow.query.filter_by(id=booking.slot_id).first()
-        exam = VivaTest.query.filter_by(id=slot.exam_id).first() if slot else None
+        slot = ExamSlot.query.filter_by(id=booking.slot_id).first()
+        exam = Examination.query.filter_by(id=slot.exam_id).first() if slot else None
         if not exam or not exam.results_published:
             continue
-        evaluation = GradeNote.query.filter_by(booking_id=booking.id).first()
+        evaluation = ExamResult.query.filter_by(booking_id=booking.id).first()
         rubrics = []
-        for question in ProbeQuery.query.filter_by(exam_id=exam.id).all():
-            given = PointAward.query.filter_by(booking_id=booking.id, question_id=question.id).first()
+        for question in ExamQuestion.query.filter_by(exam_id=exam.id).all():
+            given = QuestionScore.query.filter_by(booking_id=booking.id, question_id=question.id).first()
             rubrics.append({
                 'criterion': question.question,
                 'max_marks': question.marks,
@@ -1784,9 +1785,9 @@ def get_my_grades():
             'rubrics': rubrics
         })
     return jsonify({'data': results})
-@app.route('/fetch_csv_file/<int:job_id>', methods=['GET'])
-def fetch_csv_file(job_id):
-    job = CsvTask.query.filter_by(id=job_id, user_id=request.args.get('user_id')).first()
+@app.route('/download_exam_history/<int:job_id>', methods=['GET'])
+def download_exam_history(job_id):
+    job = HistoryExport.query.filter_by(id=job_id, user_id=request.args.get('user_id')).first()
     if not job or job.status != 'completed' or not job.file_name:
         return jsonify({'message': 'Export file is not ready'})
     path = os.path.join(EXPORT_DIR, job.file_name)
@@ -1797,9 +1798,15 @@ def fetch_csv_file(job_id):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        old_user = Member.query.filter_by(email='admin@example.com').first()
-        if not old_user:
-            user = Member(name='admin', email='admin@example.com', password='admin', role='admin')
-            db.session.add(user)
+        admin_email = 'nestadmin@examnest.edu'
+        admin_user = PortalUser.query.filter_by(email=admin_email).first()
+        if not admin_user:
+            admin_user = PortalUser(
+                name='Nest Admin',
+                email=admin_email,
+                password='NestAdmin@26',
+                role='admin'
+            )
+            db.session.add(admin_user)
             db.session.commit()
     app.run(debug=True)
