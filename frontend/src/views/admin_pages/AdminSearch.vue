@@ -30,7 +30,7 @@ import { ref } from 'vue'
 const query = ref('')
 const result = ref({ students: [], examinors: [], exams: [], bookings: [] })
 const search = async () => {
-    const response = await axios.post('http://127.0.0.1:5000/search_admin_data', { query: query.value })
+    const response = await axios.post('http://127.0.0.1:5000/admin_search_query', { query: query.value })
     result.value = response.data
 }
 </script>

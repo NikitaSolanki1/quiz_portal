@@ -41,14 +41,14 @@ const router = useRouter()
 import axios from 'axios'
 const course_data_list = ref([])
 const get_course_data = async () => {
-    const response = await axios.post('http://127.0.0.1:5000/get_courses')
+    const response = await axios.post('http://127.0.0.1:5000/list_courses')
     course_data_list.value = response.data.data
 }
 const edit_course = async (id) => {
     router.push(`/edit_course/${id}`)
 }
 const delete_course = async (id) => {
-    await axios.post(`http://127.0.0.1:5000/delete_course/${id}`)
+    await axios.post(`http://127.0.0.1:5000/remove_course/${id}`)
     get_course_data()
 }
 

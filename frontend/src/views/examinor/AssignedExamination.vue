@@ -73,14 +73,14 @@ const can_create_slot = (examination) => {
 }
 
 const fetchAssignedExaminations = async () => {
-    const response = await axios.post('http://127.0.0.1:5000/get_assigned_examinations', {
+    const response = await axios.post('http://127.0.0.1:5000/list_assigned_exams', {
         examinor_id: localStorage.getItem('user_id')
     })
     examinations.value = response.data.data
 }
 
 const markCompleted = async (id) => {
-    await axios.post(`http://127.0.0.1:5000/complete_examination/${id}`)
+    await axios.post(`http://127.0.0.1:5000/finish_exam_session/${id}`)
     fetchAssignedExaminations()
 }
 
